@@ -179,6 +179,17 @@
                   font-weight:700; padding:9px 16px; border-radius:12px; }
 
   @media(max-width:500px) { .worlds-grid { grid-template-columns:1fr; } .home-title { font-size:30px; } }
+
+  /* ── LOGIN SCREEN ── */
+  #login { justify-content:center; padding:32px 20px; gap:16px; }
+  .login-wrap { display:flex; flex-direction:column; align-items:center; gap:14px; width:100%; max-width:400px; }
+  .login-card { background:white; border-radius:22px; padding:28px 24px; width:100%; box-shadow:0 8px 32px rgba(0,0,0,0.10); display:flex; flex-direction:column; gap:14px; }
+  .login-title { font-size:20px; font-weight:900; color:var(--text); text-align:center; }
+  .login-sub { font-size:13px; color:var(--text-light); text-align:center; line-height:1.6; }
+  .login-sent { text-align:center; display:flex; flex-direction:column; gap:8px; }
+  .login-sent-icon { font-size:48px; }
+  .login-sent-title { font-size:18px; font-weight:900; color:var(--correct); }
+  .login-sent-sub { font-size:13px; color:var(--text-light); line-height:1.6; }
   #pw-email:focus { outline:none; border-color:#5b9cf6; }
 
 
@@ -293,6 +304,7 @@
     </div>
   </div>
   <p style="color:var(--text-light);font-size:13px;">🎮 בחר עולם ושלב!</p>
+  <div id="home-user-bar" style="font-size:13px;color:var(--text-light);display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center;"></div>
 </div>
 
 <!-- LEVEL SELECT -->
@@ -396,6 +408,29 @@
       </button>
     </div>
 
+    <button class="pw-back-link" onclick="showScreen('login')">כבר שילמתי? לחץ כאן להתחברות</button>
+    <button class="pw-back-link" onclick="goHome()">← חזרה לדף הבית</button>
+  </div>
+</div>
+
+<!-- LOGIN SCREEN -->
+<div class="screen" id="login">
+  <div class="login-wrap">
+    <div class="pw-bulb">💡</div>
+    <div class="pw-app-title">הילד גאון</div>
+    <p class="pw-sub">התחבר כדי לגשת לתוכן שרכשת</p>
+    <div class="login-card" id="login-form-card">
+      <div class="login-title">כניסה למשתמשים רשומים</div>
+      <div class="login-sub">הזן את האימייל שבו השתמשת בעת הרכישה.<br>נשלח לך קישור כניסה.</div>
+      <input class="pw-input" id="login-email" type="email" placeholder="כתובת אימייל *" autocomplete="email"/>
+      <button class="pw-btn" id="login-btn" onclick="sendMagicLink()">שלח קישור כניסה ✉️</button>
+      <p class="pw-err" id="login-err"></p>
+    </div>
+    <div class="login-card login-sent" id="login-sent-card" style="display:none">
+      <div class="login-sent-icon">📧</div>
+      <div class="login-sent-title">הקישור נשלח!</div>
+      <div class="login-sent-sub">בדוק את תיבת הדואר שלך ולחץ על הקישור לכניסה.</div>
+    </div>
     <button class="pw-back-link" onclick="goHome()">← חזרה לדף הבית</button>
   </div>
 </div>
@@ -1355,6 +1390,7 @@ async function loadAuthState() {
       .eq('email', currentUser.email)
       .maybeSingle();
     currentPaid = !!data;
+    if (currentPaid) localStorage.setItem('hg_paid', '1'); // persist across sessions
   } catch (e) {
     // Supabase not configured yet — fall back to localStorage demo mode
     currentPaid = localStorage.getItem('hg_paid') === '1';
@@ -1362,6 +1398,49 @@ async function loadAuthState() {
 }
 
 function isPaid()            { return currentPaid || localStorage.getItem('hg_paid') === '1'; }
+
+// ─── Magic link login ──────────────────────────────────────────
+async function sendMagicLink() {
+  const email = (document.getElementById('login-email').value || '').trim();
+  const errEl = document.getElementById('login-err');
+  const btn   = document.getElementById('login-btn');
+  errEl.textContent = '';
+  if (!email || !email.includes('@')) { errEl.textContent = 'נא להזין אימייל תקין'; return; }
+  btn.disabled = true; btn.textContent = 'שולח...';
+  try {
+    const client = await sb();
+    const redirectTo = location.origin + location.pathname + '?login=1';
+    const { error } = await client.auth.signInWithOtp({ email, options: { emailRedirectTo: redirectTo } });
+    if (error) throw error;
+    document.getElementById('login-form-card').style.display = 'none';
+    document.getElementById('login-sent-card').style.display = 'flex';
+  } catch(err) {
+    errEl.textContent = 'שגיאה: ' + (err.message || 'נסה שוב');
+    btn.disabled = false; btn.textContent = 'שלח קישור כניסה ✉️';
+  }
+}
+
+// ─── Update home user bar ─────────────────────────────────────
+function updateHomeUserBar() {
+  const bar = document.getElementById('home-user-bar');
+  if (!bar) return;
+  if (currentUser && isPaid()) {
+    bar.innerHTML = `<span>👤 ${currentUser.email}</span> <button onclick="signOut()" style="background:none;border:1px solid #ddd;border-radius:20px;padding:4px 12px;font-size:12px;cursor:pointer;font-family:Heebo,sans-serif;color:var(--text-light)">התנתק</button>`;
+  } else if (currentUser) {
+    bar.innerHTML = `<span>👤 ${currentUser.email}</span>`;
+  } else {
+    bar.innerHTML = '<button onclick="showScreen(\'login\')" style="background:none;border:1px solid #ddd;border-radius:20px;padding:4px 12px;font-size:12px;cursor:pointer;font-family:Heebo,sans-serif;color:var(--text-light)">כניסה למשתמשים רשומים</button>';
+  }
+}
+
+async function signOut() {
+  try { const client = await sb(); await client.auth.signOut(); } catch(e) {}
+  localStorage.removeItem('hg_paid');
+  localStorage.removeItem('hg_email');
+  currentUser = null; currentPaid = false;
+  updateHomeUserBar();
+  goHome();
+}
 function getTrialUsed(w)     { return parseInt(localStorage.getItem('hg_trial_' + w) || '0'); }
 function incTrialUsed(w)     { localStorage.setItem('hg_trial_' + w, getTrialUsed(w) + 1); }
 function trialLeft(w)        { return Math.max(0, TRIAL_LIMIT - getTrialUsed(w)); }
@@ -1385,14 +1464,29 @@ function onQuestionAnswered() {
   const p = new URLSearchParams(window.location.search);
   if (p.get('paid') === '1') {
     history.replaceState({}, '', location.pathname);
-    // Supabase user should now be in users_paid (written by webhook)
+    // Mark as paid in localStorage immediately
+    localStorage.setItem('hg_paid', '1');
+    const pendingEmail = localStorage.getItem('hg_pending_email');
+    if (pendingEmail) localStorage.setItem('hg_email', pendingEmail);
+    currentPaid = true;
+    updateHomeUserBar();
+    _showSuccessCard();
+    showScreen('paywall');
+  } else if (p.get('login') === '1') {
+    // Returning from magic link — Supabase handles session automatically
+    history.replaceState({}, '', location.pathname);
     await loadAuthState();
+    updateHomeUserBar();
     if (isPaid()) {
-      _showSuccessCard();
-      showScreen('paywall');
+      alert('ברוך הבא! הגישה המלאה פעילה ✅');
+      showScreen('home');
+    } else {
+      // Logged in but not paid — show paywall
+      openPaywall(null);
     }
   } else {
     await loadAuthState();
+    updateHomeUserBar();
   }
 })();
 
