@@ -1452,24 +1452,10 @@ async function startCheckout() {
   }
 
   try {
-    // 1. Sign up / sign in user in Supabase (magic link or OTP can be added later)
-    //    For now: create account with random password (user pays → webhook marks them paid)
-    const client = await sb();
-    const tempPass = Math.random().toString(36).slice(2) + '!A1';
-    await client.auth.signUp({ email, password: tempPass,
-      options: { data: { full_name: name } } });
-
-    // 2. Redirect to Stripe Checkout
-    const stripe  = await getStripe();
-    const { error } = await stripe.redirectToCheckout({
-      lineItems:         [{ price: STRIPE_PRICE_ID, quantity: 1 }],
-      mode:              'payment',
-      customerEmail:     email,
-      successUrl:        location.origin + location.pathname + '?paid=1',
-      cancelUrl:         location.origin + location.pathname,
-      clientReferenceId: email,
-    });
-    if (error) throw error;
+    // Save email and redirect to Stripe Payment Link
+    localStorage.setItem('hg_pending_email', email);
+    const paymentUrl = 'https://buy.stripe.com/test_00wcMY1fgcEzfph6ZN3F600?prefilled_email=' + encodeURIComponent(email) + '&client_reference_id=' + encodeURIComponent(email);
+    window.location.href = paymentUrl;
 
   } catch (err) {
     errEl.textContent = 'שגיאה: ' + (err.message || 'נסה שוב');
