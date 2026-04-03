@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>הילד גאון</title>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #eef0f8; --card: #ffffff; --text: #2d2d3a; --text-light: #8888aa;
+    --shapes-color: #5b9cf6; --shapes-light: #e8f1fe;
+    --numbers-color: #f4a636; --numbers-light: #fff3e0;
+    --words-color: #9b59b6; --words-light: #f3e8fd;
+    --correct: #3ec97a; --correct-light: #eafaf1;
+    --wrong: #e74c6e; --wrong-light: #fdeef2;
+    --radius: 16px; --shadow: 0 4px 24px rgba(0,0,0,0.08);
+    --wc: #5b9cf6; --wc2: #9b59b6; --wa: #5b9cf6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Heebo', sans-serif; background: linear-gradient(135deg,#eef0f8,#f5f0fc); min-height:100vh; color:var(--text); direction:rtl; }
+  .screen { display:none; min-height:100vh; flex-direction:column; align-items:center; }
+  .screen.active { display:flex; }
+
+  /* HOME */
+  #home { justify-content:center; padding:32px 20px; gap:24px; }
+  .home-logo { font-size:52px; animation:wobble 4s ease-in-out infinite; display:inline-block; }
+  @keyframes wobble { 0%,100%{transform:rotate(-8deg) scale(1)} 50%{transform:rotate(8deg) scale(1.1)} }
+  .home-title { font-size:38px; font-weight:900; text-align:center; background:linear-gradient(135deg,#e74c6e,#f4a636,#5b9cf6,#9b59b6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  .home-sub { color:var(--text-light); font-size:15px; text-align:center; margin-top:-16px; }
+  .worlds-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; width:100%; max-width:680px; }
+  .world-card { background:var(--card); border-radius:var(--radius); padding:22px 12px; text-align:center; cursor:pointer; transition:transform 0.2s,box-shadow 0.2s; box-shadow:var(--shadow); display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .world-card:hover { transform:translateY(-4px); box-shadow:0 12px 32px rgba(0,0,0,0.12); }
+  .world-icon { font-size:30px; }
+  .world-name { font-size:16px; font-weight:800; }
+  .world-card[data-world=shapes] .world-name { color:var(--shapes-color); }
+  .world-card[data-world=numbers] .world-name { color:var(--numbers-color); }
+  .world-card[data-world=words] .world-name { color:var(--words-color); }
+  .world-desc { font-size:11px; color:var(--text-light); line-height:1.5; }
+  .world-lvlinfo { font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px; margin-top:2px; }
+  .world-card[data-world=shapes] .world-lvlinfo { background:var(--shapes-light); color:var(--shapes-color); }
+  .world-card[data-world=numbers] .world-lvlinfo { background:var(--numbers-light); color:var(--numbers-color); }
+  .world-card[data-world=words] .world-lvlinfo { background:var(--words-light); color:var(--words-color); }
+
+  /* LEVEL SELECT */
+  #level-select { padding:24px 20px; gap:20px; }
+  .ls-header { width:100%; max-width:480px; display:flex; align-items:center; gap:12px; }
+  .back-btn { background:none; border:none; cursor:pointer; font-size:14px; color:var(--text-light); font-family:'Heebo',sans-serif; display:flex; align-items:center; gap:4px; padding:4px 8px; }
+  .back-btn:hover { color:var(--text); }
+  .ls-title { font-size:22px; font-weight:900; }
+  .levels-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; width:100%; max-width:480px; }
+  .level-btn { background:var(--card); border:2px solid transparent; border-radius:var(--radius); padding:16px 10px; text-align:center; cursor:pointer; transition:all 0.2s; box-shadow:var(--shadow); display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .level-btn:hover:not(.locked) { transform:translateY(-2px); }
+  .level-btn.locked { opacity:0.4; cursor:not-allowed; }
+  .level-btn.completed { border-color:var(--correct); }
+  .lv-num { font-size:22px; font-weight:900; }
+  .lv-stars { font-size:14px; }
+  .lv-lbl { font-size:11px; color:var(--text-light); }
+
+  /* GAME */
+  #game { padding:0; }
+  .top-bar { width:100%; display:flex; align-items:center; justify-content:space-between; padding:14px 20px 0; gap:8px; flex-wrap:wrap; }
+  .hearts { display:flex; gap:4px; font-size:20px; }
+  .heart.lost { filter:grayscale(1) opacity(0.3); transform:scale(0.8); }
+  .timer-badge { background:var(--card); border-radius:20px; padding:5px 12px; font-size:13px; font-weight:600; color:var(--text-light); display:flex; align-items:center; gap:4px; box-shadow:var(--shadow); }
+  .world-title-bar { font-size:15px; font-weight:800; }
+  .prog-row { width:100%; padding:8px 20px 0; display:flex; align-items:center; gap:10px; }
+  .prog-lbl { font-size:12px; color:var(--text-light); min-width:36px; }
+  .prog-bar { flex:1; height:6px; background:#e0e0ef; border-radius:10px; overflow:hidden; }
+  .prog-fill { height:100%; border-radius:10px; background:linear-gradient(90deg,var(--wc),var(--wc2)); transition:width 0.5s; width:0%; }
+
+  /* QUESTION AREA */
+  .q-area { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; width:100%; padding:0 16px 10px; gap:8px; }
+  .q-label { font-size:11px; font-weight:700; color:var(--wa); text-align:right; width:100%; max-width:460px; text-transform:uppercase; letter-spacing:0.5px; }
+
+  /* SVG drawing container */
+  .q-drawing { background:white; border-radius:var(--radius); padding:12px; width:100%; max-width:460px; display:flex; justify-content:center; align-items:center; box-shadow:0 2px 12px rgba(0,0,0,0.06); border:1.5px solid #e8e8f0; }
+  .q-drawing svg { max-width:100%; height:auto; }
+
+  /* Text question card */
+  .q-card { border-radius:var(--radius); padding:16px 20px; width:100%; max-width:460px; text-align:right; line-height:1.7; }
+  .q-card.shapes-q { background:var(--shapes-light); }
+  .q-card.numbers-q { background:var(--numbers-light); }
+  .q-card.words-q { background:#f8f0ff; }
+  .q-text { font-size:16px; font-weight:700; white-space:pre-line; }
+  .q-subtext { font-size:14px; font-weight:600; color:#555; margin-top:4px; white-space:pre-line; }
+
+  /* Reading passage */
+  .reading-title { font-size:11px; font-weight:700; color:var(--words-color); text-align:right; width:100%; max-width:460px; }
+  .reading-passage { background:var(--card); border-radius:var(--radius); padding:14px 18px; width:100%; max-width:460px; font-size:13px; line-height:1.9; max-height:120px; overflow-y:auto; text-align:right; border:1px solid #e8e8f0; }
+
+  /* OPTIONS */
+  .opts-area { width:100%; max-width:460px; display:flex; flex-direction:column; gap:8px; padding:0 16px; align-self:center; }
+  .opt-btn { background:var(--card); border:2px solid transparent; border-radius:var(--radius); padding:12px 16px; font-family:'Heebo',sans-serif; font-size:14px; font-weight:500; color:var(--text); cursor:pointer; display:flex; align-items:center; justify-content:space-between; text-align:right; width:100%; transition:all 0.18s; box-shadow:0 2px 8px rgba(0,0,0,0.05); }
+  .opt-btn:hover:not(:disabled) { border-color:var(--wa); transform:scale(1.01); }
+  .opt-lbl { background:var(--wa); color:white; border-radius:8px; width:26px; height:26px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; flex-shrink:0; }
+  .opt-btn.correct { background:var(--correct-light); border-color:var(--correct); }
+  .opt-btn.correct .opt-lbl { background:var(--correct); }
+  .opt-btn.wrong { background:var(--wrong-light); border-color:var(--wrong); }
+  .opt-btn.wrong .opt-lbl { background:var(--wrong); }
+  .opt-btn:disabled { cursor:default; transform:none; }
+
+  .bottom-bar { width:100%; padding:8px 16px 14px; display:flex; align-items:center; justify-content:space-between; max-width:480px; align-self:center; }
+  .hint-btns { display:flex; gap:8px; }
+  .hint-btn { background:var(--card); border:1px solid #e0e0ef; border-radius:20px; padding:6px 12px; font-size:11px; color:var(--text-light); cursor:pointer; font-family:'Heebo',sans-serif; }
+  .hint-btn:hover { background:#f0f0f8; }
+  .score-badge { font-size:12px; font-weight:700; color:var(--text-light); }
+
+  /* FEEDBACK */
+  .fb-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; z-index:100; opacity:0; pointer-events:none; transition:opacity 0.2s; }
+  .fb-overlay.visible { opacity:1; pointer-events:all; }
+  .fb-card { background:var(--card); border-radius:24px; padding:28px 32px; text-align:center; max-width:340px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,0.2); transform:scale(0.85); transition:transform 0.25s; }
+  .fb-overlay.visible .fb-card { transform:scale(1); }
+  .fb-emoji { font-size:48px; margin-bottom:8px; }
+  .fb-title { font-size:22px; font-weight:900; margin-bottom:6px; }
+  .fb-title.correct { color:var(--correct); }
+  .fb-title.wrong { color:var(--wrong); }
+  .fb-explain { font-size:13px; color:var(--text-light); margin-bottom:18px; line-height:1.6; max-height:110px; overflow-y:auto; direction:ltr; text-align:center; }
+  .next-btn { background:linear-gradient(135deg,var(--wc),var(--wc2)); color:white; border:none; border-radius:50px; padding:12px 28px; font-size:15px; font-weight:700; font-family:'Heebo',sans-serif; cursor:pointer; width:100%; }
+
+  /* RESULTS */
+  #results { justify-content:center; padding:40px 20px; gap:18px; }
+  .res-emoji { font-size:64px; }
+  .res-title { font-size:28px; font-weight:900; text-align:center; }
+  .res-score { font-size:50px; font-weight:900; background:linear-gradient(135deg,var(--wc),var(--wc2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  .res-stars { font-size:34px; letter-spacing:4px; }
+  .res-sub { font-size:14px; color:var(--text-light); text-align:center; }
+  .res-stats { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; }
+  .stat-chip { background:var(--card); border-radius:12px; padding:10px 16px; text-align:center; box-shadow:var(--shadow); }
+  .stat-num { font-size:22px; font-weight:800; }
+  .stat-lbl { font-size:11px; color:var(--text-light); }
+  .res-btns { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; }
+  .play-again-btn { background:linear-gradient(135deg,var(--wc),var(--wc2)); color:white; border:none; border-radius:50px; padding:14px 32px; font-size:15px; font-weight:700; font-family:'Heebo',sans-serif; cursor:pointer; }
+  .back-home-btn { background:var(--card); color:var(--text); border:2px solid #e0e0ef; border-radius:50px; padding:14px 32px; font-size:15px; font-weight:700; font-family:'Heebo',sans-serif; cursor:pointer; }
+
+  /* CONFETTI */
+  .confetti-wrap { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:200; }
+  .cp { position:absolute; top:-20px; animation:cf linear forwards; border-radius:2px; }
+  @keyframes cf { to { top:110%; transform:rotate(720deg) translateX(var(--d)); } }
+
+  
+  
+
+  
+  /* ─── PAYWALL ───────────────────────────────── */
+  #paywall { background:linear-gradient(160deg,#eef0f8,#f5f0fc); }
+  .pw-wrap  { display:flex; flex-direction:column; align-items:center; justify-content:center;
+              min-height:100vh; padding:24px 20px; gap:14px; width:100%;
+              max-width:420px; margin:0 auto; }
+  .pw-bulb  { font-size:52px; }
+  .pw-app-title { font-size:30px; font-weight:900;
+    background:linear-gradient(135deg,#5b9cf6,#9b59b6);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  .pw-sub   { font-size:14px; color:#8888aa; text-align:center; line-height:1.6; }
+  .pw-card  { background:white; border-radius:22px; padding:22px 20px; width:100%;
+              box-shadow:0 8px 32px rgba(0,0,0,0.10); display:flex; flex-direction:column; gap:14px; }
+  .pw-price-row { text-align:center; }
+  .pw-price { font-size:44px; font-weight:900; color:#2d2d3a; line-height:1; }
+  .pw-price-sub { font-size:12px; color:#aaa; margin-top:2px; }
+  .pw-features  { list-style:none; display:flex; flex-direction:column; gap:7px; }
+  .pw-features li { font-size:14px; color:#2d2d3a; }
+  .pw-divider { border:none; border-top:1px solid #f0f0f8; margin:0; }
+  .pw-input { width:100%; padding:13px 14px; border:1.5px solid #e0e0ef; border-radius:12px;
+              font-family:Heebo,sans-serif; font-size:15px; text-align:right; direction:rtl;
+              box-sizing:border-box; transition:border-color 0.15s; }
+  .pw-input:focus { outline:none; border-color:#5b9cf6; }
+  .pw-btn   { width:100%; background:linear-gradient(135deg,#5b9cf6,#9b59b6); color:white;
+              border:none; border-radius:50px; padding:16px; font-size:17px; font-weight:800;
+              font-family:Heebo,sans-serif; cursor:pointer; transition:opacity 0.2s; }
+  .pw-btn:hover { opacity:0.9; }
+  .pw-btn:disabled { opacity:0.5; cursor:wait; }
+  .pw-secure { font-size:11px; color:#bbb; text-align:center; }
+  .pw-err    { font-size:13px; color:#e74c6e; text-align:center; min-height:16px; }
+  .pw-success { text-align:center; display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .pw-back-link { background:none; border:none; color:#aaa; font-size:13px;
+                  cursor:pointer; font-family:Heebo,sans-serif; }
+  .pw-back-link:hover { color:#5b9cf6; }
+  .trial-banner { width:100%; max-width:480px; text-align:center; font-size:13px;
+                  font-weight:700; padding:9px 16px; border-radius:12px; }
+
+  @media(max-width:500px) { .worlds-grid { grid-template-columns:1fr; } .home-title { font-size:30px; } }
+  #pw-email:focus { outline:none; border-color:#5b9cf6; }
+
+
+  /* ── RESULTS REPORT ── */
+  .report-title { font-size:16px; font-weight:800; color:var(--text); margin-top:8px; align-self:flex-start; padding:0 4px; }
+  .report-list { width:100%; max-width:500px; display:flex; flex-direction:column; gap:10px; padding-bottom:20px; }
+  .report-item {
+    background:var(--card); border-radius:14px; padding:14px 16px;
+    box-shadow:var(--shadow); display:flex; flex-direction:column; gap:6px;
+    border-right:4px solid #e0e0ef;
+  }
+  .report-item.correct-item { border-right-color:var(--correct); }
+  .report-item.wrong-item   { border-right-color:var(--wrong); }
+  .report-item-top { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .report-item-label { font-size:11px; font-weight:700; color:var(--text-light); text-transform:uppercase; }
+  .report-item-status { font-size:13px; font-weight:700; display:flex; align-items:center; gap:4px; flex-shrink:0; }
+  .report-item-status.ok  { color:var(--correct); }
+  .report-item-status.err { color:var(--wrong); }
+  .report-item-q { font-size:14px; font-weight:600; color:var(--text); white-space:pre-line; text-align:right; }
+  .report-item-meta { font-size:11px; color:var(--text-light); display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  .report-item-answer { font-size:12px; color:var(--wrong); font-weight:600; }
+  .report-item-correct-ans { font-size:12px; color:var(--correct); font-weight:600; }
+  .review-btn {
+    background:none; border:1.5px solid var(--wa); border-radius:20px;
+    padding:5px 14px; font-size:12px; font-weight:700; color:var(--wa);
+    cursor:pointer; font-family:'Heebo',sans-serif; align-self:flex-end;
+    transition:background 0.15s;
+  }
+  .review-btn:hover { background:var(--shapes-light); }
+
+  /* ── REVIEW MODAL ── */
+  .review-overlay {
+    position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5);
+    display:flex; align-items:center; justify-content:center; z-index:200;
+    opacity:0; pointer-events:none; transition:opacity 0.2s;
+  }
+  .review-overlay.visible { opacity:1; pointer-events:all; }
+  .review-modal {
+    background:var(--card); border-radius:20px; padding:24px 22px; max-width:460px;
+    width:92%; max-height:88vh; overflow-y:auto;
+    box-shadow:0 20px 60px rgba(0,0,0,0.25); transform:scale(0.88); transition:transform 0.25s;
+    display:flex; flex-direction:column; gap:12px;
+  }
+  .review-overlay.visible .review-modal { transform:scale(1); }
+  .review-modal-title { font-size:17px; font-weight:900; color:var(--text); text-align:center; }
+  .review-drawing { display:flex; justify-content:center; }
+  .review-drawing svg { max-width:100%; height:auto; }
+  .review-q-text { font-size:15px; font-weight:700; color:var(--text); white-space:pre-line; text-align:right; background:var(--shapes-light); border-radius:12px; padding:12px 14px; }
+  .review-options { display:flex; flex-direction:column; gap:7px; }
+  .review-opt {
+    padding:10px 14px; border-radius:12px; font-size:14px; font-weight:500;
+    display:flex; justify-content:space-between; align-items:center;
+    border:2px solid transparent;
+  }
+  .review-opt.correct { background:var(--correct-light); border-color:var(--correct); font-weight:700; }
+  .review-opt.user-wrong { background:var(--wrong-light); border-color:var(--wrong); }
+  .review-explain-title { font-size:13px; font-weight:800; color:var(--text); }
+  .review-explain-body { direction:ltr; text-align:center; }
+  .review-explain-body div { font-size:14px; color:#444; line-height:1.9; }
+  .review-close {
+    background:linear-gradient(135deg,var(--wc),var(--wc2)); color:white; border:none;
+    border-radius:50px; padding:12px; font-size:15px; font-weight:700;
+    font-family:'Heebo',sans-serif; cursor:pointer; margin-top:4px;
+  }
+
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div class="screen active" id="home">
+  <div class="home-logo" id="bulb-logo">
+  <svg width="80" height="80" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" id="bulb-svg">
+    <!-- Glow rays -->
+    <g id="bulb-rays" opacity="1">
+      <line x1="40" y1="6" x2="40" y2="14" stroke="#f4a636" stroke-width="3" stroke-linecap="round"/>
+      <line x1="62" y1="13" x2="56" y2="19" stroke="#f4a636" stroke-width="3" stroke-linecap="round"/>
+      <line x1="72" y1="36" x2="64" y2="36" stroke="#f4a636" stroke-width="3" stroke-linecap="round"/>
+      <line x1="62" y1="59" x2="56" y2="53" stroke="#f4a636" stroke-width="3" stroke-linecap="round"/>
+      <line x1="18" y1="13" x2="24" y2="19" stroke="#f4a636" stroke-width="3" stroke-linecap="round"/>
+      <line x1="8"  y1="36" x2="16" y2="36" stroke="#f4a636" stroke-width="3" stroke-linecap="round"/>
+      <line x1="18" y1="59" x2="24" y2="53" stroke="#f4a636" stroke-width="3" stroke-linecap="round"/>
+    </g>
+    <!-- Bulb glass -->
+    <path id="bulb-glass"
+      d="M40 18 C26 18 18 27 18 36 C18 44 22 50 28 54 L28 60 Q28 63 31 63 L49 63 Q52 63 52 60 L52 54 C58 50 62 44 62 36 C62 27 54 18 40 18 Z"
+      fill="#ffe066" stroke="#e0a800" stroke-width="1.8"/>
+    <!-- Filament -->
+    <path d="M34 54 Q37 46 40 50 Q43 46 46 54" fill="none" stroke="#c07800" stroke-width="2" stroke-linecap="round"/>
+    <!-- Base stripes -->
+    <rect x="30" y="63" width="20" height="4" rx="2" fill="#bbb"/>
+    <rect x="31" y="68" width="18" height="4" rx="2" fill="#aaa"/>
+    <rect x="33" y="73" width="14" height="4" rx="3" fill="#999"/>
+  </svg>
+</div>
+  <div><h1 class="home-title">הילד גאון</h1><p class="home-sub">הכנה לשלב ב׳ – מבחן מחוננים</p></div>
+  <div class="worlds-grid">
+    <div class="world-card" data-world="shapes" onclick="showLevelSelect('shapes')">
+      <div class="world-icon">◆</div><div class="world-name">עולם הצורות</div>
+      <div class="world-desc">מטריצות, סדרות וחוקיות</div>
+      <div class="world-lvlinfo" id="shapes-info">טוען...</div>
+    </div>
+    <div class="world-card" data-world="numbers" onclick="showLevelSelect('numbers')">
+      <div class="world-icon">🔢</div><div class="world-name">עולם המספרים</div>
+      <div class="world-desc">בעיות מילוליות ומספרים בצורות</div>
+      <div class="world-lvlinfo" id="numbers-info">טוען...</div>
+    </div>
+    <div class="world-card" data-world="words" onclick="showLevelSelect('words')">
+      <div class="world-icon">📚</div><div class="world-name">עולם המילים</div>
+      <div class="world-desc">יחסי מילים והשלמת משפטים</div>
+      <div class="world-lvlinfo" id="words-info">טוען...</div>
+    </div>
+  </div>
+  <p style="color:var(--text-light);font-size:13px;">🎮 בחר עולם ושלב!</p>
+</div>
+
+<!-- LEVEL SELECT -->
+<div class="screen" id="level-select">
+  <div class="ls-header">
+    <button class="back-btn" onclick="goHome()">← בית</button>
+    <div class="ls-title" id="ls-title">עולם הצורות</div>
+  </div>
+  <div class="levels-grid" id="levels-grid"></div>
+</div>
+
+<!-- GAME -->
+<div class="screen" id="game">
+  <div class="top-bar">
+    <div class="hearts" id="hearts"><span class="heart">❤️</span><span class="heart">❤️</span><span class="heart">❤️</span></div>
+    <div class="timer-badge">⏱ <span id="timer">0</span>ש׳</div>
+    <div class="world-title-bar" id="world-title-bar">עולם הצורות</div>
+    <button class="back-btn" onclick="backToLevels()">← שלבים</button>
+  </div>
+  <div class="prog-row">
+    <span class="prog-lbl" id="prog-lbl">0/10</span>
+    <div class="prog-bar"><div class="prog-fill" id="prog-fill"></div></div>
+  </div>
+  <div class="q-area" id="q-area"></div>
+  <div class="opts-area" id="opts-area"></div>
+  <div class="bottom-bar">
+    <div class="hint-btns">
+      <button class="hint-btn" onclick="skipQ()">⏭ דלג</button>
+      <button class="hint-btn" onclick="iKnew()">💡 ידעתי</button>
+    </div>
+    <div class="score-badge">⭐ <span id="score-disp">0</span></div>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div class="screen" id="results">
+  <div class="res-emoji" id="res-emoji">🎉</div>
+  <h2 class="res-title" id="res-title">כל הכבוד!</h2>
+  <div class="res-score" id="res-score">85%</div>
+  <div class="res-stars" id="res-stars">⭐⭐⭐</div>
+  <p class="res-sub" id="res-sub"></p>
+  <div class="res-stats">
+    <div class="stat-chip"><div class="stat-num" id="s-correct">0</div><div class="stat-lbl">✅ נכון</div></div>
+    <div class="stat-chip"><div class="stat-num" id="s-wrong">0</div><div class="stat-lbl">❌ טעות</div></div>
+    <div class="stat-chip"><div class="stat-num" id="s-time">0</div><div class="stat-lbl">⏱ שניות</div></div>
+  </div>
+  <div class="res-btns">
+    <button class="play-again-btn" onclick="retryLevel()">🔄 שוב</button>
+    <button class="back-home-btn" onclick="backToLevels()">← שלבים</button>
+  </div>
+  <div class="report-title">📋 סיכום שאלות</div>
+  <div class="report-list" id="report-list"></div>
+</div>
+
+<!-- PAYWALL -->
+<div class="screen" id="paywall">
+  <div class="pw-wrap">
+    <div class="pw-bulb">💡</div>
+    <div class="pw-app-title">הילד גאון</div>
+    <p class="pw-sub" id="pw-sub-msg">ניצלת את שאלות הניסיון.<br>קבל גישה מלאה לכל השאלות</p>
+
+    <!-- FORM STATE -->
+    <div class="pw-card" id="pw-form-card">
+      <div class="pw-price-row">
+        <div class="pw-price">₪39.90</div>
+        <div class="pw-price-sub">תשלום חד-פעמי · גישה ללא הגבלה</div>
+      </div>
+      <ul class="pw-features">
+        <li>✅ כל שאלות עולם הצורות</li>
+        <li>✅ כל שאלות עולם המספרים</li>
+        <li>✅ כל שאלות עולם המילים</li>
+        <li>✅ דוח מפורט בסוף כל שאלון</li>
+      </ul>
+      <hr class="pw-divider"/>
+      <input class="pw-input" id="pw-name"  type="text"  placeholder="שם מלא *" autocomplete="name"/>
+      <input class="pw-input" id="pw-email" type="email" placeholder="כתובת אימייל *" autocomplete="email"/>
+      <button class="pw-btn" id="pw-pay-btn" onclick="startCheckout()">
+        לתשלום מאובטח 🔒
+      </button>
+      <p class="pw-secure">מוגן על ידי Stripe · SSL · לא שומרים פרטי כרטיס</p>
+      <p class="pw-err" id="pw-err"></p>
+    </div>
+
+    <!-- SUCCESS STATE -->
+    <div class="pw-card pw-success" id="pw-success-card" style="display:none">
+      <div style="font-size:48px">🎉</div>
+      <div style="font-size:20px;font-weight:900;color:#3ec97a">תשלום התקבל!</div>
+      <div style="font-size:14px;color:#888">הגישה המלאה הופעלה בהצלחה</div>
+      <button class="pw-btn" style="margin-top:8px" onclick="showScreen('home')">
+        התחל ללמוד ←
+      </button>
+    </div>
+
+    <!-- ALREADY LOGGED IN -->
+    <div class="pw-card pw-success" id="pw-already-card" style="display:none">
+      <div style="font-size:36px">✅</div>
+      <div style="font-size:17px;font-weight:800;color:#5b9cf6" id="pw-already-email"></div>
+      <div style="font-size:13px;color:#888">כבר יש לך גישה מלאה</div>
+      <button class="pw-btn" style="margin-top:8px" onclick="showScreen('home')">
+        המשך ←
+      </button>
+    </div>
+
+    <button class="pw-back-link" onclick="goHome()">← חזרה לדף הבית</button>
+  </div>
+</div>
+
+<!-- REVIEW MODAL -->
+<div class="review-overlay" id="review-overlay" onclick="closeReview(event)">
+  <div class="review-modal" id="review-modal">
+    <div class="review-modal-title" id="rv-title">סקירת שאלה</div>
+    <div class="review-drawing" id="rv-drawing"></div>
+    <div class="review-q-text" id="rv-qtext"></div>
+    <div class="review-options" id="rv-options"></div>
+    <div class="review-explain-title">💡 הסבר:</div>
+    <div class="review-explain-body" id="rv-explain"></div>
+    <button class="review-close" onclick="closeReview()">סגור ✕</button>
+  </div>
+</div>
+
+<div class="fb-overlay" id="fb-overlay">
+  <div class="fb-card">
+    <div class="fb-emoji" id="fb-emoji">🎉</div>
+    <div class="fb-title" id="fb-title">נכון!</div>
+    <div class="fb-explain" id="fb-explain"></div>
+    <button class="next-btn" onclick="nextQ()">לשאלה הבאה ←</button>
+  </div>
+</div>
+<div class="confetti-wrap" id="confetti"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// SVG DRAWING HELPERS
+// ═══════════════════════════════════════════════════════════════
+
+// Draw a 3-section circle (pie chart style with 3 equal sections)
+// top-left, top-right, bottom
+function svgCircle3(tl, tr, bot, qMark, size=180) {
+  const cx=size/2, cy=size/2, r=size*0.42;
+  // 3 sections: left (~210°→90°), right (~90°→330°), bottom (~330°→210°) — approximate trisection
+  // Actually draw as: top-left=150°-270°... let's use standard trisection
+  // Section 1 (top-left): 210°\n330°  (but we'll use visual positions)
+  // Let's just draw lines from center at 90°, 210°, 330° to divide into thirds
+  const a1=Math.PI/2, a2=Math.PI/2+2*Math.PI/3, a3=Math.PI/2+4*Math.PI/3;
+  const stroke='#555';
+  function lineToEdge(a) { return `${cx+r*Math.cos(a)},${cy-r*Math.sin(a)}`; }
+  const labels = [
+    {text: tl==='?' ? qMark : tl, x: cx - r*0.5, y: cy - r*0.28},
+    {text: tr==='?' ? qMark : tr, x: cx + r*0.5, y: cy - r*0.28},
+    {text: bot==='?' ? qMark : bot, x: cx, y: cy + r*0.55},
+  ];
+  const isQ = [tl==='?', tr==='?', bot==='?'];
+  return `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="white" stroke="${stroke}" stroke-width="2"/>
+    <line x1="${cx}" y1="${cy}" x2="${lineToEdge(a1).split(',')[0]}" y2="${lineToEdge(a1).split(',')[1]}" stroke="${stroke}" stroke-width="1.5"/>
+    <line x1="${cx}" y1="${cy}" x2="${lineToEdge(a2).split(',')[0]}" y2="${lineToEdge(a2).split(',')[1]}" stroke="${stroke}" stroke-width="1.5"/>
+    <line x1="${cx}" y1="${cy}" x2="${lineToEdge(a3).split(',')[0]}" y2="${lineToEdge(a3).split(',')[1]}" stroke="${stroke}" stroke-width="1.5"/>
+    ${labels.map((l,i)=>`<text x="${l.x}" y="${l.y}" text-anchor="middle" dominant-baseline="middle" font-family="Heebo,sans-serif" font-size="${r*0.38}" font-weight="${isQ[i]?'900':'600'}" fill="${isQ[i]?'#e74c6e':'#222'}">${l.text}</text>`).join('')}
+  </svg>`;
+}
+
+// Draw two 3-section circles side by side
+function svgTwoCircles(c1tl,c1tr,c1bot, c2tl,c2tr,c2bot, q, size=160) {
+  const gap=20, totalW=size*2+gap;
+  const cx=size/2, cy=size/2, r=size*0.42, stroke='#555';
+  const a1=Math.PI/2, a2=Math.PI/2+2*Math.PI/3, a3=Math.PI/2+4*Math.PI/3;
+  function circle(ox, vals, hasQ) {
+    const labels=[
+      {text:vals[0], x:ox+cx-r*0.5, y:cy-r*0.28},
+      {text:vals[1], x:ox+cx+r*0.5, y:cy-r*0.28},
+      {text:vals[2], x:ox+cx, y:cy+r*0.55},
+    ];
+    function pt(a){return `${cx+r*Math.cos(a)},${cy-r*Math.sin(a)}`;}
+    return `
+      <circle cx="${ox+cx}" cy="${cy}" r="${r}" fill="white" stroke="${stroke}" stroke-width="2"/>
+      <line x1="${ox+cx}" y1="${cy}" x2="${ox+Number(pt(a1).split(',')[0])}" y2="${pt(a1).split(',')[1]}" stroke="${stroke}" stroke-width="1.5"/>
+      <line x1="${ox+cx}" y1="${cy}" x2="${ox+Number(pt(a2).split(',')[0])}" y2="${pt(a2).split(',')[1]}" stroke="${stroke}" stroke-width="1.5"/>
+      <line x1="${ox+cx}" y1="${cy}" x2="${ox+Number(pt(a3).split(',')[0])}" y2="${pt(a3).split(',')[1]}" stroke="${stroke}" stroke-width="1.5"/>
+      ${labels.map((l,i)=>{
+        const isQ=l.text==='?';
+        return `<text x="${l.x}" y="${l.y}" text-anchor="middle" dominant-baseline="middle" font-family="Heebo,sans-serif" font-size="${r*0.38}" font-weight="${isQ?'900':'600'}" fill="${isQ?'#e74c6e':'#222'}">${isQ?q:l.text}</text>`;
+      }).join('')}
+    `;
+  }
+  return `<svg viewBox="0 0 ${totalW} ${size}" width="${totalW}" height="${size}" xmlns="http://www.w3.org/2000/svg">
+    ${circle(0,[c1tl,c1tr,c1bot],false)}
+    ${circle(size+gap,[c2tl,c2tr,c2bot],true)}
+  </svg>`;
+}
+
+// Draw a circle with center value and outer values (like question 5 in Numbers_In_Shapes)
+function svgCircleCenter(center, outer, q, size=200) {
+  const cx=size/2, cy=size/2;
+  const rOuter=size*0.45, rInner=size*0.22, stroke='#555';
+  const n=outer.length;
+  const angles=outer.map((_,i)=> -Math.PI/2 + i*(2*Math.PI/n));
+  return `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="${cx}" cy="${cy}" r="${rOuter}" fill="white" stroke="${stroke}" stroke-width="2"/>
+    <circle cx="${cx}" cy="${cy}" r="${rInner}" fill="#f5f5f5" stroke="${stroke}" stroke-width="1.5"/>
+    ${angles.map((a,i)=>{
+      const x=cx+rOuter*0.65*Math.cos(a), y=cy+rOuter*0.65*Math.sin(a);
+      const lx=cx+(rOuter+18)*Math.cos(a), ly=cy+(rOuter+18)*Math.sin(a);
+      const isQ=outer[i]==='?';
+      return `<line x1="${cx}" y1="${cy}" x2="${cx+rOuter*Math.cos(a)}" y2="${cy+rOuter*Math.sin(a)}" stroke="${stroke}" stroke-width="1.2"/>
+      <text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" font-family="Heebo,sans-serif" font-size="16" font-weight="${isQ?'900':'600'}" fill="${isQ?'#e74c6e':'#222'}">${isQ?q:outer[i]}</text>`;
+    }).join('')}
+    <text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="middle" font-family="Heebo,sans-serif" font-size="20" font-weight="700" fill="#222">${center}</text>
+  </svg>`;
+}
+
+// Staircase rectangle grid (questions 7-8 in Numbers_In_Shapes)
+function svgStairGrid(rows, q, size=220) {
+  const cellW=52, cellH=38, stroke='#555';
+  const maxCols=Math.max(...rows.map(r=>r.length));
+  const totalW=cellW*maxCols+4, totalH=cellH*rows.length+4;
+  let cells='';
+  rows.forEach((row,ri)=>{
+    const offset=(maxCols-row.length)*cellW;
+    row.forEach((val,ci)=>{
+      const x=offset+ci*cellW+2, y=ri*cellH+2;
+      const isQ=val==='?';
+      cells+=`<rect x="${x}" y="${y}" width="${cellW}" height="${cellH}" fill="white" stroke="${stroke}" stroke-width="1.5"/>
+      <text x="${x+cellW/2}" y="${y+cellH/2}" text-anchor="middle" dominant-baseline="middle" font-family="Heebo,sans-serif" font-size="16" font-weight="${isQ?'900':'600'}" fill="${isQ?'#e74c6e':'#222'}">${isQ?q:val}</text>`;
+    });
+  });
+  return `<svg viewBox="0 0 ${totalW} ${totalH}" width="${totalW}" height="${totalH}" xmlns="http://www.w3.org/2000/svg">${cells}</svg>`;
+}
+
+// Triangle pyramid - exactly matching the PDF images
+// rows[0] = [top]          \n1 white up-triangle with number
+// rows[1] = [left, right]  \nleft=dark up-tri, center=white down-tri (empty), right=white up-tri
+// rows[2] = [far-left, mid-left, mid-right, far-right]
+//           far-left=white up, mid-left=dark up, center-down=white down(empty), mid-right=white up, far-right=white up
+// Dark (filled) triangles point UP and have numbers in them
+// White inverted triangles point DOWN and are empty (no number)
+function svgTrianglePyramid(rows, q) {
+  // Exact replica of the PDF pyramid:
+  // - All numbered cells = white UP-pointing triangles
+  // - All separators    = filled BLACK UP-pointing triangles (same size, same direction)
+  // Layout:
+  //   Row 0 (top):    [num]
+  //   Row 1 (mid):    [num]  [BLACK]  [num]
+  //   Row 2 (bot):    [num]  [BLACK]  [num]  [BLACK]  [num]
+
+  const W = 310, H = 230, stroke = '#333';
+  const S = 56; // base of each small equilateral triangle
+  const th = S * Math.sqrt(3) / 2; // height of each triangle
+
+  // Center-x of the SVG
+  const cx = W / 2;
+
+  // Row Y centers (center of each triangle's vertical extent)
+  // Each row of triangles has height th
+  // Stack them with small gap
+  const rowGap = 2;
+  const botY = H - 18 - th / 2;
+  const midY = botY - th - rowGap;
+  const topY = midY - th - rowGap;
+
+  // Horizontal spacing: adjacent triangles share an edge, so centers are S apart
+  const sp = S; // spacing between adjacent same-row triangle centers
+
+  function upTriPts(cx, cy) {
+    // Equilateral triangle pointing UP, center of mass at (cx,cy)
+    // centroid is at h/3 from base, 2h/3 from apex
+    return `${cx},${cy - th*2/3}  ${cx - S/2},${cy + th/3}  ${cx + S/2},${cy + th/3}`;
+  }
+
+  function drawTri(cx, cy, fill, val) {
+    const pts = upTriPts(cx, cy);
+    const isQ = (val === '?');
+    const textColor = isQ ? '#e74c6e' : (fill === '#333' ? 'white' : '#222');
+    const label = (val !== undefined && val !== '')
+      ? `<text x="${cx}" y="${cy + 4}" text-anchor="middle" dominant-baseline="middle"
+           font-family="Heebo,sans-serif" font-size="15" font-weight="${isQ ? '900' : '700'}"
+           fill="${textColor}">${isQ ? q : val}</text>`
+      : '';
+    return `<polygon points="${pts}" fill="${fill}" stroke="${stroke}" stroke-width="1.8"/>${label}`;
+  }
+
+  // Extract values
+  const topVal  = rows[0] ? (rows[0][0] || '') : '';
+  const midLval = rows[1] ? (rows[1][0] || '') : '';
+  const midRval = rows[1] ? (rows[1][1] || '') : '';
+  const b0      = rows[2] ? (rows[2][0] || '') : '';
+  const b1      = rows[2] ? (rows[2][1] || '') : '';
+  const b2      = rows[2] ? (rows[2][2] || '') : '';
+
+  // Outer big triangle vertices (tight around the inner grid)
+  const outerTop = `${cx},${topY - th*2/3 - 6}`;
+  const outerBL  = `${cx - sp*2 - S/2 - 6},${botY + th/3 + 6}`;
+  const outerBR  = `${cx + sp*2 + S/2 + 6},${botY + th/3 + 6}`;
+
+  return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
+    <polygon points="${outerTop} ${outerBL} ${outerBR}" fill="none" stroke="${stroke}" stroke-width="2.5"/>
+    ${drawTri(cx,          topY, 'white',  topVal)}
+    ${drawTri(cx - sp,     midY, 'white',  midLval)}
+    ${drawTri(cx,          midY, '#333',   '')}
+    ${drawTri(cx + sp,     midY, 'white',  midRval)}
+    ${drawTri(cx - sp*2,   botY, 'white',  b0)}
+    ${drawTri(cx - sp,     botY, '#333',   '')}
+    ${drawTri(cx,          botY, 'white',  b1)}
+    ${drawTri(cx + sp,     botY, '#333',   '')}
+    ${drawTri(cx + sp*2,   botY, 'white',  b2)}
+  </svg>`;
+}
+
+// 2-circle linked (simulation exam style: circles linked by arrows)
+function svgLinkedCircles(rows, q) {
+  // rows = [[left,center,right], [left2,center2,right2]]
+  const W=320, H=140, r=28, boxW=52, boxH=36, stroke='#555';
+  const y1=H*0.28, y2=H*0.72;
+  const xL=40, xC=W/2, xR=W-40;
+  function circle(x,y,val) {
+    const isQ=val==='?';
+    return `<circle cx="${x}" cy="${y}" r="${r}" fill="white" stroke="${stroke}" stroke-width="2"/>
+    <text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" font-family="Heebo,sans-serif" font-size="15" font-weight="${isQ?'900':'600'}" fill="${isQ?'#e74c6e':'#222'}">${isQ?q:val}</text>`;
+  }
+  function box(x,y,val) {
+    const isQ=val==='?';
+    return `<rect x="${x-boxW/2}" y="${y-boxH/2}" width="${boxW}" height="${boxH}" fill="white" stroke="${stroke}" stroke-width="2"/>
+    <text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" font-family="Heebo,sans-serif" font-size="15" font-weight="${isQ?'900':'600'}" fill="${isQ?'#e74c6e':'#222'}">${isQ?q:val}</text>`;
+  }
+  function arrow(x1,y1,x2,y2) {
+    const dx=x2-x1, dy=y2-y1, len=Math.sqrt(dx*dx+dy*dy);
+    const ux=dx/len, uy=dy/len;
+    const sx=x1+ux*32, sy=y1+uy*32, ex=x2-ux*30, ey=y2-uy*30;
+    return `<line x1="${sx}" y1="${sy}" x2="${ex}" y2="${ey}" stroke="${stroke}" stroke-width="1.5" marker-end="url(#arr)"/>`;
+  }
+  return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
+    <defs><marker id="arr" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="${stroke}"/></marker></defs>
+    ${circle(xL, y1, rows[0][0])} ${box(xC, y1, rows[0][1])} ${circle(xR, y1, rows[0][2])}
+    ${arrow(xL,y1,xC,y1)} ${arrow(xR,y1,xC,y1)}
+    ${circle(xL, y2, rows[1][0])} ${box(xC, y2, rows[1][1])} ${circle(xR, y2, rows[1][2])}
+    ${arrow(xL,y2,xC,y2)} ${arrow(xR,y2,xC,y2)}
+  </svg>`;
+}
+
+// Arrow boxes (question 4 simulation: 34→32, 32→29, 29→?)
+function svgArrowBoxes(items, q) {
+  const W=320, H=80, bW=70, bH=50, stroke='#555';
+  const n=items.length;
+  const spacing=W/(n+1);
+  let svg=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
+    <defs><marker id="ar2" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="${stroke}"/></marker></defs>`;
+  items.forEach((item,i) => {
+    const x=spacing*(i+1), y=H/2;
+    const isQ=item.val==='?';
+    svg+=`<rect x="${x-bW/2}" y="${y-bH/2}" width="${bW}" height="${bH}" fill="white" stroke="${stroke}" stroke-width="2" rx="6"/>
+    <text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" font-family="Heebo,sans-serif" font-size="17" font-weight="${isQ?'900':'600'}" fill="${isQ?'#e74c6e':'#222'}">${isQ?q:item.val}</text>`;
+    // Draw arrows inside box (representing the number of arrows)
+    if (item.arrows) {
+      for(let a=0;a<item.arrows;a++) {
+        const ay=y-8+a*8;
+        svg+=`<line x1="${x-bW/2+8}" y1="${ay}" x2="${x+bW/2-12}" y2="${ay}" stroke="${stroke}" stroke-width="1" marker-end="url(#ar2)"/>`;
+      }
+    }
+    // Arrow between boxes
+    if (i < items.length-1) {
+      const nx=spacing*(i+2);
+      svg+=`<line x1="${x+bW/2+2}" y1="${y}" x2="${nx-bW/2-2}" y2="${y}" stroke="${stroke}" stroke-width="1.5" marker-end="url(#ar2)"/>`;
+    }
+  });
+  svg+=`</svg>`;
+  return svg;
+}
+
+// Concentric rings circle - exactly as in PDF (question 11 sim)
+// 3 rings divided by 3 lines: outer ring has 3 values, middle ring has 2 values, center = 1 value
+function svgConcentricCircle(outerVals, middleVals, centerVal, q) {
+  const W=220, H=220, cx=110, cy=110;
+  const rOut=100, rMid=68, rIn=36, stroke='#444';
+  // Dividing lines at -90deg (top), -90+120=30deg, -90+240=150deg
+  const angles = [-Math.PI/2, -Math.PI/2 + 2*Math.PI/3, -Math.PI/2 + 4*Math.PI/3];
+  const pts = angles.map(a => [cx + rOut*Math.cos(a), cy + rOut*Math.sin(a)]);
+  function txt(val, x, y, big) {
+    const isQ = val === '?';
+    return '<text x="'+x+'" y="'+y+'" text-anchor="middle" dominant-baseline="middle" font-family="Heebo,sans-serif" font-size="'+(big?20:15)+'" font-weight="'+(isQ?'900':'600')+'" fill="'+(isQ?'#e74c6e':'#222')+'">'+(isQ ? q : val)+'</text>';
+  }
+  // Mid-angles for the 3 sections (between consecutive dividing lines)
+  const secMid = [
+    -Math.PI/2 + Math.PI/3,      // top-right section
+    -Math.PI/2 + Math.PI,        // bottom section
+    -Math.PI/2 + 5*Math.PI/3     // top-left section
+  ];
+  const outerR_lbl = (rOut+rMid)/2;
+  const midR_lbl   = (rMid+rIn)/2;
+  const oPos = secMid.map(a => [cx + outerR_lbl*Math.cos(a), cy + outerR_lbl*Math.sin(a)]);
+  const mPos = secMid.map(a => [cx + midR_lbl*Math.cos(a), cy + midR_lbl*Math.sin(a)]);
+
+  return '<svg viewBox="0 0 '+W+' '+H+'" width="'+W+'" height="'+H+'" xmlns="http://www.w3.org/2000/svg">'
+    +'<circle cx="'+cx+'" cy="'+cy+'" r="'+rOut+'" fill="white" stroke="'+stroke+'" stroke-width="2"/>'
+    +'<circle cx="'+cx+'" cy="'+cy+'" r="'+rMid+'" fill="#efefef" stroke="'+stroke+'" stroke-width="1.5"/>'
+    +'<circle cx="'+cx+'" cy="'+cy+'" r="'+rIn+'"  fill="#dcdcdc" stroke="'+stroke+'" stroke-width="1.5"/>'
+    + pts.map(p=>'<line x1="'+cx+'" y1="'+cy+'" x2="'+p[0]+'" y2="'+p[1]+'" stroke="'+stroke+'" stroke-width="1.5"/>').join('')
+    + outerVals.map((v,i)=>txt(v, oPos[i][0], oPos[i][1], false)).join('')
+    + middleVals.map((v,i)=>v ? txt(v, mPos[i][0], mPos[i][1], false) : '').join('')
+    + txt(centerVal, cx, cy, true)
+    +'</svg>';
+}
+
+// Butterfly shape - two butterflies side by side, matching PDF image exactly
+// Each butterfly: 2 large upper wings + 2 smaller lower wings + thin body line + center number
+// leftVals=[TL, TR, BL, BR], centerVal=body number
+// rightVals=[TL, TR, BL, BR] where one is '?'
+function svgButterfly(leftVals, centerVal, rightVals, q) {
+  const W=440, H=190, stroke='#333';
+
+  function oneBfly(cx, cy, vals, bodyVal) {
+    // vals = [TL, TR, BL, BR]
+    const tl=vals[0]||'', tr=vals[1]||'', bl=vals[2]||'', br=vals[3]||'';
+
+    // Upper wings: large, rounded, meeting at body center
+    // Lower wings: smaller, more rounded
+    // Body: thin vertical oval
+
+    // Upper-left wing path (cubic bezier, organic shape)
+    const ULW = `M ${cx} ${cy-8}
+      C ${cx-20} ${cy-30}, ${cx-80} ${cy-70}, ${cx-110} ${cy-55}
+      C ${cx-140} ${cy-40}, ${cx-130} ${cy+5}, ${cx-90} ${cy+20}
+      C ${cx-60} ${cy+32}, ${cx-20} ${cy+18}, ${cx} ${cy+8} Z`;
+
+    // Upper-right wing (mirror)
+    const URW = `M ${cx} ${cy-8}
+      C ${cx+20} ${cy-30}, ${cx+80} ${cy-70}, ${cx+110} ${cy-55}
+      C ${cx+140} ${cy-40}, ${cx+130} ${cy+5}, ${cx+90} ${cy+20}
+      C ${cx+60} ${cy+32}, ${cx+20} ${cy+18}, ${cx} ${cy+8} Z`;
+
+    // Lower-left wing (smaller, rounder)
+    const LLW = `M ${cx} ${cy+8}
+      C ${cx-15} ${cy+20}, ${cx-65} ${cy+55}, ${cx-80} ${cy+65}
+      C ${cx-90} ${cy+72}, ${cx-75} ${cy+85}, ${cx-50} ${cy+78}
+      C ${cx-30} ${cy+72}, ${cx-12} ${cy+50}, ${cx} ${cy+30} Z`;
+
+    // Lower-right wing (mirror)
+    const LRW = `M ${cx} ${cy+8}
+      C ${cx+15} ${cy+20}, ${cx+65} ${cy+55}, ${cx+80} ${cy+65}
+      C ${cx+90} ${cy+72}, ${cx+75} ${cy+85}, ${cx+50} ${cy+78}
+      C ${cx+30} ${cy+72}, ${cx+12} ${cy+50}, ${cx} ${cy+30} Z`;
+
+    // Thin body (narrow vertical ellipse)
+    const bodyH = 48, bodyW = 9;
+
+    function lbl(v, x, y) {
+      const isQ = v==='?';
+      return `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle"
+        font-family="Heebo,sans-serif" font-size="15" font-weight="${isQ?'900':'600'}"
+        fill="${isQ?'#e74c6e':'#222'}">${isQ?q:v}</text>`;
+    }
+
+    return `
+      <path d="${ULW}" fill="white" stroke="${stroke}" stroke-width="1.8" stroke-linejoin="round"/>
+      <path d="${URW}" fill="white" stroke="${stroke}" stroke-width="1.8" stroke-linejoin="round"/>
+      <path d="${LLW}" fill="white" stroke="${stroke}" stroke-width="1.8" stroke-linejoin="round"/>
+      <path d="${LRW}" fill="white" stroke="${stroke}" stroke-width="1.8" stroke-linejoin="round"/>
+      <ellipse cx="${cx}" cy="${cy+11}" rx="${bodyW}" ry="${bodyH/2}"
+        fill="#e4e4e4" stroke="${stroke}" stroke-width="1.8"/>
+      ${bodyVal ? `<text x="${cx}" y="${cy+11}" text-anchor="middle" dominant-baseline="middle"
+        font-family="Heebo,sans-serif" font-size="13" font-weight="800"
+        fill="${bodyVal==='?'?'#e74c6e':'#333'}">${bodyVal==='?'?q:bodyVal}</text>` : ''}
+      ${lbl(tl, cx-72, cy-32)}
+      ${lbl(tr, cx+72, cy-32)}
+      ${lbl(bl, cx-52, cy+60)}
+      ${lbl(br, cx+52, cy+60)}
+    `;
+  }
+
+  return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
+    ${oneBfly(110, 88, leftVals, centerVal)}
+    ${oneBfly(330, 88, rightVals, '')}
+  </svg>`;
+}
+
+// Star shape (question 14 sim)
+function svgStar(vals, q) {
+  const W=260, H=260, cx=130, cy=130, stroke='#555';
+  const outerR=110, innerR=50;
+  const n=5;
+  function starPoint(i, r) {
+    const a = -Math.PI/2 + (i*2*Math.PI)/n;
+    return [cx+r*Math.cos(a), cy+r*Math.sin(a)];
+  }
+  let points='';
+  for(let i=0;i<n;i++) {
+    const [ox,oy]=starPoint(i,outerR), [ix,iy]=starPoint(i+0.5,innerR);
+    points+=`${ox},${oy} ${ix},${iy} `;
+  }
+  // Value positions (tips and inner)
+  const tipPositions = Array.from({length:n},(_,i)=>starPoint(i,outerR*0.72));
+  return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
+    <polygon points="${points.trim()}" fill="white" stroke="${stroke}" stroke-width="2"/>
+    ${vals.slice(0,5).map((v,i)=>{
+      const [x,y]=tipPositions[i], isQ=v==='?';
+      return `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" font-family="Heebo,sans-serif" font-size="14" font-weight="${isQ?'900':'600'}" fill="${isQ?'#e74c6e':'#222'}">${isQ?q:v}</text>`;
+    }).join('')}
+    ${vals[5]?`<text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="middle" font-family="Heebo,sans-serif" font-size="15" font-weight="700" fill="#222">${vals[5]}</text>`:''}
+  </svg>`;
+}
+
+// Matrix 3x3 grid
+function svgMatrix3x3(cells, q, size=220) {
+  const cols=3, rows=cells.length/3;
+  const cellW=size/3, cellH=size/rows;
+  const stroke='#555';
+  let svg=`<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">`;
+  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) {
+    const x=c*cellW, y=r*cellH, val=cells[r*cols+c];
+    const isQ=val==='?';
+    svg+=`<rect x="${x}" y="${y}" width="${cellW}" height="${cellH}" fill="white" stroke="${stroke}" stroke-width="1.5"/>`;
+    if (val && !isQ) svg+=`<text x="${x+cellW/2}" y="${y+cellH/2}" text-anchor="middle" dominant-baseline="middle" font-family="Heebo,sans-serif" font-size="15" font-weight="600" fill="#222">${val}</text>`;
+    if (isQ) svg+=`<text x="${x+cellW/2}" y="${y+cellH/2}" text-anchor="middle" dominant-baseline="middle" font-family="Heebo,sans-serif" font-size="22" font-weight="900" fill="#e74c6e">?</text>`;
+  }
+  svg+=`</svg>`;
+  return svg;
+}
+
+// Simple sequence row
+function svgSequenceRow(items, q) {
+  const n=items.length, W=Math.min(360, n*70+20), H=70, stroke='#555';
+  const bW=58, bH=48;
+  let svg=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">`;
+  items.forEach((val,i)=>{
+    const x=i*(W/n)+W/n/2, y=H/2, isQ=val==='?';
+    svg+=`<rect x="${x-bW/2}" y="${y-bH/2}" width="${bW}" height="${bH}" fill="${isQ?'#fff0f0':'white'}" stroke="${isQ?'#e74c6e':stroke}" stroke-width="${isQ?'2.5':'1.5'}" rx="8"/>
+    <text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" font-family="Heebo,sans-serif" font-size="${isQ?'20':'16'}" font-weight="${isQ?'900':'600'}" fill="${isQ?'#e74c6e':'#222'}">${isQ?q:val}</text>`;
+    if(i<items.length-1) svg+=`<text x="${x+bW/2+6}" y="${y+2}" text-anchor="middle" dominant-baseline="middle" font-size="18" fill="#aaa">→</text>`;
+  });
+  svg+=`</svg>`;
+  return svg;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// QUESTION BANK with svg functions
+// ═══════════════════════════════════════════════════════════════
+const QB = {
+
+shapes: [
+  // Numbers in Shapes 2 - Q1: circle with 8,6,?
+  {label:'מספרים בצורות', svg:()=>svgCircle3('8','6','?','?'), question:'איזה מהמספרים שבתשובות יכול להחליף את סימן השאלה?', options:['2','12','3','42'], answer:0, explain:'8 − 6 = 2'},
+  // Q2: circle 0,?,3
+  {label:'מספרים בצורות', svg:()=>svgCircle3('0','?','3','?'), question:'איזה מהמספרים שבתשובות יכול להחליף את סימן השאלה?', options:['1','2','3','4'], answer:2, explain:'0 + 3 = 3 ✓'},
+  // Q3: two circles 20,16,4 | 4,?,4
+  {label:'מספרים בצורות', svg:()=>svgTwoCircles('20','16','4','4','?','4','?'), question:'איזה מהמספרים שבתשובות יכול להחליף את סימן השאלה?', options:['1','0','8','16'], answer:1, explain:'4 − 4 = 0'},
+  // Q4: two circles 18,6,? | 13,7,6
+  {label:'מספרים בצורות', svg:()=>svgTwoCircles('18','6','?','13','7','6','?'), question:'איזה מהמספרים שבתשובות יכול להחליף את סימן השאלה?', options:['3','12','18','24'], answer:1, explain:'18 − 6 = 12'},
+  // Q5: center circle 5, outers 2,10,50,?
+  {label:'מספרים בצורות', svg:()=>svgCircleCenter('5',['2','10','50','?'],'?'), question:'איזה מהמספרים שבתשובות יכול להחליף את סימן השאלה?', options:['5','40','15','20'], answer:0, explain:'5 × 2 = 10 ✓\n5 × 10 = 50 ✓\n5 × 5 = 25 ✓\nהחסר = 5'},
+  // Q6: center circle 13, sections 8,5,6,?
+  {label:'מספרים בצורות', svg:()=>svgCircleCenter('13',['8','5','6','?'],'?'), question:'איזה מהמספרים שבתשובות יכול להחליף את סימן השאלה?', options:['12','19','7','72'], answer:2, explain:'8 + 5 = 13 ✓\n6 + ? = 13\n? = 7'},
+  // Q7: staircase grid
+  {label:'מספרים בצורות', svg:()=>svgStairGrid([['2'],['2','3'],['4','5','?'],['','15','8'],['','','40']],'?'), question:'איזה מהמספרים שבתשובות יכול להחליף את סימן השאלה?', options:['3','12','32','5'], answer:3, explain:'כל שורה: תחתון = כפל שני השכנים. 8×5=40 ✓, ?×8=40\n?=5'},
+  // Q8: staircase grid
+  {label:'מספרים בצורות', svg:()=>svgStairGrid([['12'],['?','10'],['4','2','20'],['','8','8'],['','','12']],'?'), question:'איזה מהמספרים שבתשובות יכול להחליף את סימן השאלה?', options:['8','6','10','3'], answer:0, explain:'12 = 4 + 8 ✓\n? + 2 = 10\n? = 8'},
+  // Q9: triangle pyramid
+  {label:'מספרים בצורות', svg:()=>svgTrianglePyramid([['0'],['?','5'],['21','16','11']],'?'), question:'איזה מהמספרים שבתשובות יכול להחליף את סימן השאלה?', options:['0','5','6','3'], answer:1, explain:'16 − 11 = 5 ✓\n21 − 16 = 5 ✓\n? = 5'},
+  // Q10: triangle pyramid
+  {label:'מספרים בצורות', svg:()=>svgTrianglePyramid([['?'],['30','3'],['10','3','1']],'?'), question:'איזה מהמספרים שבתשובות יכול להחליף את סימן השאלה?', options:['3','60','10','90'], answer:3, explain:'10 × 3 = 30 ✓\n3 × 1 = 3 ✓\n30 × 3 = 90\n? = 90'},
+  // Simulation Q1: two circles 21,14,7 | 19,9,?
+  {label:'מספרים בצורות', svg:()=>svgTwoCircles('21','14','7','19','9','?','?'), question:'איזה מהמספרים שבתשובות יכול להחליף את סימן השאלה?', options:['10','9','8','28'], answer:0, explain:'21 − 14 = 7 ✓\n19 − 9 = 10\n? = 10'},
+  // Simulation Q2: two circles 8,20,12 | 17,?,5
+  {label:'מספרים בצורות', svg:()=>svgTwoCircles('8','20','12','17','?','5','?'), question:'איזה מהמספרים שבתשובות יכול להחליף את סימן השאלה?', options:['10','22','12','19'], answer:1, explain:'8 + 12 = 20 ✓\n17 + 5 = 22\n? = 22'},
+  // Simulation Q3: two linked pairs 16→18 (arrow2), 32→?(arrow4)
+  {label:'מספרים בצורות', svg:()=>svgArrowBoxes([{val:'16',arrows:2},{val:'18'},{val:'32',arrows:4},{val:'?'}],'?'), question:'החוק: כל חץ = +1', options:['36','34','38','40'], answer:0, explain:'16 + 2 = 18 ✓\n32 + 4 = 36\n? = 36'},
+  // Simulation Q4: arrow boxes 34→32, 32→29, 29→?
+  {label:'מספרים בצורות', svg:()=>svgArrowBoxes([{val:'34',arrows:2},{val:'32',arrows:3},{val:'29',arrows:4},{val:'?'}],'?'), question:'החוק: כל חץ = −1', options:['20','25','28','30'], answer:1, explain:'34 − 2 = 32 ✓\n32 − 3 = 29 ✓\n29 − 4 = 25\n? = 25'},
+  // Simulation Q5: triangle pyramid 38,20,18,7,13,?
+  {label:'מספרים בצורות', svg:()=>svgTrianglePyramid([['38'],['20','18'],['7','13','?']],'?'), question:'איזה מהמספרים שבתשובות יכול להחליף את סימן השאלה?', options:['31','5','1','10'], answer:1, explain:'7 + 13 = 20 ✓\n13 + ? = 18\n? = 5'},
+  // Simulation Q6: triangle pyramid 160,8,?,2,4,5
+  {label:'מספרים בצורות', svg:()=>svgTrianglePyramid([['160'],['8','?'],['2','4','5']],'?'), question:'איזה מהמספרים שבתשובות יכול להחליף את סימן השאלה?', options:['1','9','20','152'], answer:2, explain:'2 × 4 = 8 ✓\n4 × 5 = 20\n? = 20\n8 × 20 = 160 ✓'},
+  // Simulation Q7: linked circles 12→2←6 / ?→5←10
+  {label:'מספרים בצורות', svg:()=>svgLinkedCircles([['12','2','6'],['?','5','10']],'?'), question:'איזה מהמספרים שבתשובות יכול להחליף את סימן השאלה?', options:['5','2','50','10'], answer:2, explain:'12 ÷ 6 = 2 ✓\n? ÷ 10 = 5\n? = 50'},
+  // Simulation Q8: linked circles 17→7←10 / ?→10←13
+  {label:'מספרים בצורות', svg:()=>svgLinkedCircles([['17','7','10'],['?','10','13']],'?'), question:'איזה מהמספרים שבתשובות יכול להחליף את סימן השאלה?', options:['23','20','3','17'], answer:0, explain:'17 − 10 = 7 ✓\n? − 13 = 10\n? = 23'},
+  // Simulation Q9: staircase
+  {label:'מספרים בצורות', svg:()=>svgStairGrid([['1'],['3','1'],['4','?','5'],['','9','6'],['','','11']],'?'), question:'איזה מהמספרים שבתשובות יכול להחליף את סימן השאלה?', options:['8','9','10','11'], answer:0, explain:'3 + 1 = 4 ✓\n4 + 5 = 9 ✓\n3 + 5 = 8\n? = 8'},
+  // Simulation Q10: staircase
+  {label:'מספרים בצורות', svg:()=>svgStairGrid([['?'],['2','3'],['8','4','5'],['','12','5'],['','','25']],'?'), question:'איזה מהמספרים שבתשובות יכול להחליף את סימן השאלה?', options:['4','6','10','16'], answer:1, explain:'2 × 3 = 6\n? = 6'},
+  // Simulation Q11: concentric circles
+  {label:'מספרים בצורות', svg:()=>svgConcentricCircle(['?','2',''],['5','4','3'],'6','?'), question:'איזה מהמספרים שבתשובות יכול להחליף את סימן השאלה?', options:['1','5','11','20'], answer:0, explain:'2 + 4 = 6\n3 + 5 = 8\n? + ... = ?\n? = 1'},
+  // Simulation Q12: circle with 12,?,6,12,4,3 (two-ring)
+  {label:'מספרים בצורות', svg:()=>svgConcentricCircle(['12','2','?'],['6','4',''],'3','?'), question:'איזה מהמספרים שבתשובות יכול להחליף את סימן השאלה?', options:['1','0','2','6'], answer:1, explain:'12 ÷ 6 = 2\n4 ÷ 2 = 2\n? = 0'},
+  // Simulation Q13: butterfly
+  {label:'מספרים בצורות', svg:()=>svgButterfly(['55','40','32','17'],'23',['69','?','18','25'],''), question:'איזה מספר יכול למלא את גוף הפרפר הריק?', options:['43','23','51','44'], answer:2, explain:'55 − 32 = 23 ✓ (גוף)\n69 − 18 = 51\n? = 51'},
+  // Simulation Q14: star
+  {label:'מספרים בצורות', svg:()=>svgStar(['?','46','40','34','28'],'?'), question:'איזה מהמספרים שבתשובות יכול להחליף את סימן השאלה?', options:['18','22','14','52'], answer:1, explain:'28+6=34 ✓\n34+6=40 ✓\n40+6=46 ✓\n46+6=52? לא — 28,34,40,46\nממשיך ב-6: הקודם ל-28 = 22\n?=22'},
+],
+
+numbers: [
+  {label:'בעיות מילוליות', question:'שני מבוגרת מיונתן ב-7 שנים.\nגבי מבוגר מיונתן ב-3 שנים.\nמה נכון?', options:['גבי מבוגר משני ב-4 שנים','גבי מבוגר משני ב-10 שנים','שני מבוגרת מגבי ב-10 שנים','שני מבוגרת מגבי ב-4 שנים'], answer:3, explain:'7−3=4. שני מבוגרת מגבי ב-4 שנים.'},
+  {label:'בעיות מילוליות', question:'להכנת עוגה צריך 6 ביצים.\nדנה ונير רוצים להכין 8 עוגות.\nלדנה 12 ביצים, לניר 16.\nכמה ביצים חסרות?', options:['8','10','12','20'], answer:3, explain:'8 × 6 = 48\n12 + 16 = 28\n48 − 28 = 20'},
+  {label:'בעיות מילוליות', question:'במקרר של רון יש 18 ביצים.\nאמו הכינה חביתה לעצמה ולשלושת ילדיה.\nלכל חביתה 3 ביצים.\nכמה ביצים נשארו?', options:['12','9','6','4'], answer:2, explain:'4 × 3 = 12\n18 − 12 = 6'},
+  {label:'בעיות מילוליות', question:'בשיעור התעמלות: 6 קבוצות × 5 ילדים.\nבשיעור חשבון: חולקו ל-2 קבוצות שוות.\nכמה ילדים בכל קבוצה?', options:['10','12','15','16'], answer:2, explain:'5 × 6 = 30\n30 ÷ 2 = 15'},
+  {label:'בעיות מילוליות', question:'חבילת דוקים: 26 דוקים, מהם 4 ורודים.\nאירית קנתה 2 חבילות.\nכמה דוקים שאינם ורודים?', options:['20','22','42','44'], answer:3, explain:'26 − 4 = 22\n22 × 2 = 44'},
+  {label:'בעיות מילוליות', question:'הקוסם הכניס 36 שפנים לכובעים, 6 לכל כובע.\nהעלים שפן אחד מכל כובע.\nכמה שפנים נשארו?', options:['6','30','31','35'], answer:1, explain:'36 ÷ 6 = 6 כובעים\n36 − 6 = 30'},
+  {label:'בעיות מילוליות', question:'טרופית=3₪, סוכריה=4₪.\nדורית קנתה 8 טרופיות ו-10 סוכריות.\nשילמה ב-2 שטרות של 50₪.\nכמה עודף?', options:['36₪','24₪','34₪','16₪'], answer:0, explain:'8 × 3 + 10 × 4 = 64\n100 − 64 = 36₪'},
+  {label:'בעיות מילוליות', question:'לדור 16 גוגואים, לעמי 10.\nעמי נתן לדור 4.\nאז דור נתן לעמי חצי מכל גוגואיו.\nכמה גוגואים לעמי כעת?', options:['10','20','16','14'], answer:2, explain:'עמי: 10 − 4 = 6\nדור: 16 + 4 = 20\nדור נתן 10\nעמי: 6 + 10 = 16'},
+  {label:'בעיות מילוליות', question:'מה המספר שאם נוסיף לו 4 ונחלק ב-2 נקבל 7?', options:['10','6','5','4'], answer:0, explain:'(10 + 4) ÷ 2 = 7 ✓'},
+  {label:'בעיות מילוליות', question:'לרון 18 גולות, לדנה 16, לנצן 8.\nצריך 50 גולות לתחרות.\nכמה חסרות?', options:['10','8','6','12'], answer:1, explain:'18 + 16 + 8 = 42\n50 − 42 = 8'},
+  {label:'בעיות מילוליות', question:'מה המספר שאם נחלק ב-2 ונוסיף 10 נקבל 13?', options:['10','6','8','4'], answer:1, explain:'6 ÷ 2 = 3\n3 + 10 = 13 ✓'},
+  {label:'בעיות מילוליות', question:'100 גרם גרעינים = 2.40₪.\nסיון קנתה 200 גרם.\nכמה עלתה הקנייה?', options:['2.80₪','4.40₪','3.88₪','4.80₪'], answer:3, explain:'200 = 2 × 100\n2 × 2.40 = 4.80₪'},
+  {label:'בעיות מילוליות', question:'להכנת בקבוק קטשופ מלא = 42 עגבניות.\nעומרי קטף 150 עגבניות.\nכמה בקבוקים מלאים?', options:['5','2','3','4'], answer:2, explain:'42 × 3 = 126 ≤ 150\n42 × 4 = 168 > 150\n3 בקבוקים'},
+  {label:'בעיות מילוליות', question:'כמה עשרות יש במספר עשרת-אלפים?', options:['עשר','אלף','מאה','חמש-מאות'], answer:1, explain:'10,000 ÷ 10 = 1,000\n= אלף'},
+  {label:'בעיות מילוליות', question:'טמפרטורת האגם יורדת.\nכל ירידה של מעלה = 3 ברווזים עפים.\nהתחלה: 50. סוף: 17.\nבכמה מעלות ירדה?', options:['11','6','13','14'], answer:0, explain:'50 − 17 = 33 ברווזים\n33 ÷ 3 = 11 מעלות'},
+  {label:'בעיות מילוליות', question:'לרון: 13 קלפים רגילים + 5 זוהרים.\nלגלית: 10 רגילים + 4 זוהרים.\nאיחדו הכל. כמה קלפים?', options:['18','32','33','14'], answer:1, explain:'13 + 5 + 10 + 4 = 32'},
+  {label:'בעיות מילוליות', question:'בשמורה 24 איילים חולקו ל-4 קבוצות שוות.\nכמה איילים יצאו לכיוון צפון?', options:['6','12','8','4'], answer:0, explain:'24 ÷ 4 = 6'},
+  {label:'בעיות מילוליות', question:'בחצר 3 עצי דובדבן.\nמכל עץ נושרים 10 עלים ביום.\nכמה עלים אוסף ביומיים?', options:['90','15','30','60'], answer:3, explain:'3 × 10 × 2 = 60'},
+  {label:'בעיות מילוליות', question:'ענת: 3 מדפים × 5 ספרים.\nאבא הוסיף 2 מדפים.\nחילקה מחדש על 5 מדפים שווה.\nכמה ספרים על כל מדף?', options:['5','2','3','4'], answer:2, explain:'3 × 5 = 15\n15 ÷ 5 = 3'},
+  {label:'בעיות מילוליות', question:'בגינה: 3 עצי תפוז (8 כ"א) + 5 עצי לימון (7 כ"א).\nכמה פירות?', options:['59','62','43','14'], answer:0, explain:'3 × 8 = 24\n5 × 7 = 35\n24 + 35 = 59'},
+  {label:'בעיות מילוליות', question:'שרון קנתה:\n3 סוכריות × 3₪ + פחית 5₪ + כריך 16₪.\nכמה הוציאה?', options:['21₪','25₪','30₪','40₪'], answer:2, explain:'9 + 5 + 16 = 30₪'},
+  {label:'בעיות מילוליות', question:'שוק: 50 ענבים = 20₪.\nירקן: 50 ענבים = 10₪.\nמכולת: 50 ענבים = 50₪.\nאיפה הכי משתלם?', options:['בשוק','אצל הירקן','במכולת','שווה בכל מקום'], answer:1, explain:'שוק: 20₪ לכל 50\nירקן: 10₪ לכל 50 ✓\nמכולת: 50₪ לכל 50'},
+  {label:'בעיות מילוליות', question:'לדנית 9 ביצים.\n4 עוגות שוקולד (4 ביצים כ"א) + 10 פנקייקים (2 ביצים).\nכמה ביצים חסרות?', options:['10','14','12','9'], answer:3, explain:'4 × 4 = 16\n16 + 2 = 18\n18 − 9 = 9'},
+  {label:'בעיות מילוליות', question:'לועדת קישוט: 3 בנים + 3 בנות מכל כיתה.\nסך הכל 48 ילדים.\nכמה כיתות?', options:['6','5','8','4'], answer:2, explain:'48 ÷ 6 = 8'},
+  {label:'בעיות מילוליות', question:'רועי בן 6. אמא גדולה ממנו ב-23.\nאבא קטן מאמא ב-3.\nבן כמה אבא?', options:['29','32','35','26'], answer:3, explain:'6 + 23 = 29 (אמא)\n29 − 3 = 26 (אבא)'},
+  {label:'בעיות מילוליות', question:'מיכאל שטף 20 צלחות (2₪ כ"א) ו-30 כוסות (1₪ כ"א).\nכמה קיבל?', options:['60₪','70₪','80₪','50₪'], answer:1, explain:'20 × 2 = 40\n30 × 1 = 30\n40 + 30 = 70₪'},
+  {label:'בעיות מילוליות', question:'לכוס שייק: 3 בננות + 5 תותים + גויאבה.\nטוביה הכין ל-5 אנשים.\nכמה פירות?', options:['34','27','45','44'], answer:2, explain:'9 × 5 = 45'},
+  {label:'בעיות מילוליות', question:'עידן: 15 נחשי גומי + 13 דובוני + 12 בננות.\n4 ממתקים לכל שקית.\nכמה שקיות?', options:['10','20','8','5'], answer:0, explain:'40 ÷ 4 = 10'},
+  {label:'בעיות מילוליות', question:'לרון: 2×0.5₪, 4×1₪, 3×2₪, 2×5₪, 1×10₪.\nכמה כסף בסך הכל?', options:['21₪','20₪','31₪','34₪'], answer:2, explain:'1 + 4 + 6 + 10 + 10 = 31₪'},
+  {label:'בעיות מילוליות', question:'רפי ניצח 10 פעמים ברציפות.\nכל ניצחון = סוכריה.\n3 ניצחונות רצופים = בונוס סוכריה.\nכמה סוכריות?', options:['10','12','13','4'], answer:2, explain:'10 ניצחונות = 10 סוכריות\nבונוס ב-3: +1, ב-6: +1, ב-9: +1\n10 + 3 = 13'},
+],
+
+words: [
+  {label:'יחסי מילים', question:'לְהַסְכִּים : לְסָרֵב\n— אותו קשר:', options:['תפוח : אגס','לכעוס : לזעום','לְהִתְעוֹרֵר : לְהֵרָדֵם','ארון : ארונית'], answer:2, explain:'להסכים↔לסרב = הפכים. להתעורר↔להירדם = הפכים.'},
+  {label:'יחסי מילים', question:'סָבְתָא : אִמָּא\n— אותו קשר:', options:['כִּבְשָׂה : טַלְיָה','עַקְרָב : עַכָּבִישׁ','רֶשֶׁת : כַּדּוּר','דּוֹד : דּוֹדָה'], answer:0, explain:'סבתא=אמא של אמא. כבשה=אמא של טליה.'},
+  {label:'יחסי מילים', question:'תְּמוּנָה : צַלָּם\n— אותו קשר:', options:['רַקְדָּנִית : שִׁיר','מַחְבֶּרֶת : שׁוּרָה','שָׁמַיִם : מָטוֹס','צִיּוּר : צַיָּר'], answer:3, explain:'תמונה = תוצר הצלם. ציור = תוצר הצייר.'},
+  {label:'יחסי מילים', question:'שָׁטִיחַ : מַרְבָּד\n— אותו קשר:', options:['אֹכֶל : מָזוֹן','עוֹלָם : יַבָּשָׁה','כֶּלֶב : זָנָב','כִּסֵּא : שֻׁלְחָן'], answer:0, explain:'שטיח=מרבד (נרדפות). אוכל=מזון (נרדפות).'},
+  {label:'יחסי מילים', question:'לִגְלֹשׁ : גַּלְשָׁן\n— אותו קשר:', options:['לְטַאטֵא : מַטְאטֵא','לְחַפֵּשׂ : תִּיק','לִשְׁתּוֹת : מִיץ','לְפָרֵק : דֶּבֶק'], answer:0, explain:'גלישה = פעולה באמצעות גלשן. טיאוט = פעולה באמצעות מטאטא.'},
+  {label:'יחסי מילים', question:'אֲגַרְטָל : פְּרָחִים\n— אותו קשר:', options:['מָטוֹס : אֲוִירוֹן','שָׂדֶה : רַקֶּפֶת','מְגֵרָה : גַּרְבַּיִם','לַחֲלֹם : מִטָּה'], answer:2, explain:'אגרטל = כלי לפרחים. מגרה = כלי לגרביים.'},
+  {label:'יחסי מילים', question:'בְּעִיטָה : רֶגֶל\n— אותו קשר:', options:['שְׁמִיעָה : עַיִן','שִׂמְלָה : בֶּגֶד','קְלִיטָה : אַנְטֶנָּה','מַפְתֵּחַ : מַנְעוּל'], answer:2, explain:'בעיטה = פעולה ברגל. קליטה = פעולה באנטנה.'},
+  {label:'יחסי מילים', question:'לִשְׂחוֹת : מַיִם\n— אותו קשר:', options:['לִנְשֹׁם : חַמְצָן','לָעוּף : אֲוִיר','תַּפּוּחַ : לֶאֱכֹל','חֲבִיתָה : בֵּיצָה'], answer:1, explain:'שחייה = תנועה במים. טיסה = תנועה באוויר.'},
+  {label:'יחסי מילים', question:'טַיָּס : מָטוֹס\n— אותו קשר:', options:['נַּהָּג : מִרוּץ','דָּאוֹן : עֲפִיפוֹן','דַּיָּג : דָּגִים','רַב-חוֹבֵל : סְפִינָה'], answer:3, explain:'טייס מפעיל מטוס. רב-חובל מפעיל ספינה.'},
+  {label:'יחסי מילים', question:'גָּמָל : בֶּכֶר\n— אותו קשר:', options:['חֲמוֹר : עַיִר','תַּרְנְגוֹל : תַּרְנְגוֹלֶת','כֶּלֶב : חָתוּל','דֶּשֶׁא : עֵץ'], answer:0, explain:'בכר=גמל צעיר. עייר=חמור צעיר.'},
+  {label:'יחסי מילים', question:'צַמֶּרֶת : עֵץ\n— אותו קשר:', options:['גַּג : בַּיִת','רִיצְפָּה : בַּיִת','חַלּוֹן : בַּיִת','דֶּלֶת : בַּיִת'], answer:0, explain:'צמרת = חלק עליון של עץ. גג = חלק עליון של בית.'},
+  {label:'יחסי מילים', question:'מְלֻכְלָך : נָקִי\n— אותו קשר:', options:['גָּבוֹהַּ : רָם','מְבֻלְגָּן : מְסוּדָּר','מַצְחִיק : מַשְׁעֲשֵׁעַ','מְשׁוּנֶה : מוּזָר'], answer:1, explain:'מלוכלך↔נקי = הפכים. מבולגן↔מסודר = הפכים.'},
+  {label:'יחסי מילים', question:'בַּיִת : טִירָה\n— אותו קשר:', options:['טוּשׁ : סָגוֹל','כְּלֵי רֶכֶב : כַּרְכָּרָה','שִׁיר : פִּזְמוֹן','שְׁעוּעִית : מוּצְרֵי חָלָב'], answer:1, explain:'טירה = בית מפואר. כרכרה = כלי רכב מיוחד/קדום.'},
+  {label:'יחסי מילים', question:'גּוּפִיָּה : קַיִץ\n— אותו קשר:', options:['מַגָּפַיִם : חוֹרֶף','רוֹכְסָן : בֶּגֶד','שְׂרוֹעַל : חוּלְצָה','גֶּשֶׁם : חוֹרֶף'], answer:0, explain:'גופייה = בגד לקיץ. מגפיים = נועלים בחורף.'},
+  {label:'יחסי מילים', question:'תֵּה : סֵפֶל\n— אותו קשר:', options:['מַיִם : בֶּרֶז','פַּסְטָה : מַזְלֵג','צַלַּחַת : כּוֹס','מָרָק : קְעָרָה'], answer:3, explain:'תה שמים בספל. מרק שמים בקערה.'},
+  {label:'יחסי מילים', question:'עֵץ : נְיָר\n— אותו קשר:', options:['חוֹל : נְעָלַיִם','חוֹל : יָם','חוֹל : זְכוּכִית','חוֹל : צְדָפוֹת'], answer:2, explain:'נייר עשוי מעץ. זכוכית עשויה מחול.'},
+  {label:'יחסי מילים', question:'חִלָּזוֹן : זוֹחֵל\n— אותו קשר:', options:['סוּס : דוֹהֵר','תַּן : מְיַלֵּל','אָדָם : מְפַהֵק','תַּרְנְגוֹלֶת : דּוֹגֶרֶת'], answer:3, explain:'חילזון = זוחל. תרנגולת = דוגרת.'},
+  {label:'יחסי מילים', question:'כִּסֵּא : סַפְסָל\n— אותו קשר:', options:['כּוּרְסָה : סַפָּה','שֻׁלְחָן : מִיטָּה','סַפָּה : שֻׁלְחָן','מִיטָּה : כּוּרְסָה'], answer:0, explain:'כיסא ≈ ספסל (ישיבה). כורסה ≈ ספה (ישיבה מרווחת).'},
+  {label:'יחסי מילים', question:'עָקֹם : יָשָׁר\n— אותו קשר:', options:['חָתוּל : כֶּלֶב','מְחֻסְפָּס : חָלָק','נָאֶה : יָפֶה','מְקוּשְׁקָשׁ : מְצֻיָּר'], answer:1, explain:'עקום↔ישר = הפכים. מחוספס↔חלק = הפכים.'},
+  {label:'יחסי מילים', question:'פּוּרִים : חַג\n— אותו קשר:', options:['מַסֵּכָה : תַּחְפֹּשֶׁת','שָׁעָה : יוֹם','כִּסְלֵו : חֹדֶשׁ','פֶּסַח : סֻכּוֹת'], answer:2, explain:'פורים הוא חג. כסלו הוא חודש.'},
+  {label:'יחסי מילים', question:'כּוֹבַע : רֹאשׁ\n— אותו קשר:', options:['גַּרְבַּיִם : בִּרְכַּיִם','כַּפָּפוֹת : כַּפּוֹת יָדַיִם','מִשְׁקָפַיִם : שֵׂעָר','צָעִיף : מָתְנַיִם'], answer:1, explain:'כובע = כיסוי לראש. כפפות = כיסוי לכפות ידיים.'},
+  {label:'יחסי מילים', question:'לִשְׂחוֹת : דָּג\n— אותו קשר:', options:['לִקְנֵן : צִפּוֹר','לְנַקֵּר : צִפּוֹר','לְצַיְּץ : צִפּוֹר','לָעוּף : צִפּוֹר'], answer:3, explain:'דג שוחה. ציפור עפה.'},
+  {label:'יחסי מילים', question:'גַּלְגַּל : עִגּוּל\n— אותו קשר:', options:['עַכְבָּר : אָפוֹר','מָטוֹס : גָּדוֹל','מַחְבֶּרֶת : מְרֻבָּע','לוּחַ : מְשֻׁלָּשׁ'], answer:2, explain:'גלגל בצורת עיגול. מחברת בצורת מרובע.'},
+  {label:'השלמת משפטים', question:'הַמְּפַקֵּד הוֹרָה לְחַיָּלָיו _____ לְאָחוֹר\nוּלְפַנּוֹת אֶת הַשֶּׁטַח.', options:['לְהִתְקַדֵּם','לְהִישָׁאֵר','לָסֶגֶת','לִנְדּוֹד'], answer:2, explain:'לסגת = לחזור אחורה.'},
+  {label:'השלמת משפטים', question:'כֹּל הַנִּסְיוֹנוֹת שֶׁל הַפָּקִיד לְתַקֵּן אֶת טָעוּתוֹ _____ וְהוּא פֻּטַּר.', options:['עָלוּ יָפֶה','עֲלֵה וְהַצְלַח','עָלוּ בַּתֹּהוּ','חָזָק וְאָמַץ'], answer:2, explain:'עלו בתוהו = נסתיימו בכישלון.'},
+  {label:'השלמת משפטים', question:'כְּשֶׁהַסֻּכָּרִיָּה נָפְלָה מִיָּדוֹ שֶׁל הַיֶּלֶד הוּא הֵחֵל _____.', options:['לְיַבֵּב','לְהֵאָמֵר','לִשְׂמֹחַ','לִפְעוֹת'], answer:0, explain:'לייבב = לבכות, ליילל.'},
+  {label:'השלמת משפטים', question:'שָׂמַחְתִּי כְּשֶׁהַמּוֹרָה הוֹדִיעָה שֶׁהַמִּבְחָן _____,\nזֹאת מִשּׁוּם שֶׁטֶּרֶם הִתְחַלְתִּי לִלְמֹד.', options:['יִוָּעֵד','יִתְקַיֵּם','יִדָּחֶה','יִתְרַחֵשׁ'], answer:2, explain:'אם המבחן ידחה — אין צורך להתכונן. לכן שמחה.'},
+  {label:'השלמת משפטים', question:'הַסְּעָרָה _____ אֶמֶשׁ בִּצְפוֹן הָאָרֶץ גָּרְמָה נֶזֶק רָב.', options:['שֶׁהִתְלַחֲשָׁה','שֶׁהִתְחוֹלְלָה','שֶׁהִסְתַּתְּרָה','שֶׁהִסְתָּאֲבָה'], answer:1, explain:'התחוללה = התרחשה, הייתה.'},
+  {label:'השלמת משפטים', question:'הַנִּסָּיוֹן שֶׁל הָעוֹבֵד לִזְכּוֹת בְּהַעֲרָכַת מְנַהֲלוֹ _____\nלְאַחַר שֶׁאַחַת הַיָּזְמוֹת שֶׁלּוֹ _____.', options:['צָלַח / נִכְשְׁלָה','עָלָה בַּתֹּהוּ / נִכְשְׁלָה','לֹא צָלַח / הִתְגַּלְּתָה כְּמַבְטִיחָה','עָלָה בַּתֹּהוּ / עָלְתָה יָפֶה'], answer:1, explain:'עלה בתוהו = כשל. ההגיון: יוזמה נכשלה\nלא זכה בהערכה.'},
+  {label:'השלמת משפטים', question:'מְקֻבָּל לַחְשֹׁב כִּי מִנְהַג שְׁתִיַּת הַתֵּה הוּא אֵירוֹפִי,\n_____ מְקוֹרוֹ הוּא בְּ_____.', options:['וְאָכֵן / מִזְרַח אַסְיָה','אַךְ לְמַעֲשֶׂה / מִזְרַח אַסְיָה','וְאָמְנָם / אַפְרִיקָה','אַךְ בְּפֹעַל / אֵירוֹפָּה'], answer:1, explain:'יש ניגוד: חשבו אירופי, אך בפועל מקורו מזרח אסיה.'},
+  {label:'השלמת משפטים', question:'הַתְּפוּקָה הַשְּׁנָתִית בַּמִּפְעָל _____ בַּשָּׁנָה הָאַחֲרוֹנָה\nבִּשְׁל מַעֲבָר לְטֶכְנוֹלוֹגִיַּת יִיצוּר _____.', options:['גָּדְלָה / חַדְשָׁנִית וְיָעִילָה','הִצְטַמְּצְמָה / מְהִירָה','צָמְחָה / יְשָׁנָה וְאִיטִית','הִתְמַעֲטָה / יְקָרָה'], answer:0, explain:'טכנולוגיה חדשנית ויעילה\nתפוקה גדלה.'},
+  {label:'השלמת משפטים', question:'_____ הַסּוֹפֵר זָכָה סִפְרוֹ לְבִקּוֹרוֹת _____ רַבּוֹת.', options:['עַל אַף תִּקְוָתוֹ שֶׁל / חִיוּבִיּוֹת','כְּפִי שֶׁחָשַׁשׁ / חִיוּבִיּוֹת','לְמָרוֹת חֲשָׁשׁוֹתָיו שֶׁל / חִיוּבִיּוֹת','לְמָרוֹת חֲשָׁשׁוֹתָיו / שְׁלִילִיּוֹת'], answer:2, explain:'למרות חששותיו של הסופר — ביקורות חיוביות.'},
+  {label:'השלמת משפטים', question:'בְּיוֹם _____ שֶׁל קַיִץ אֶפְשַׁר לִרְאוֹת _____ כְּחוּלִּים.', options:['נָעִים / עֲנָנִים','חַמִּים / צִפּוֹרִים','בָּהִיר / שָׁמַיִם','גָּשׁוּם / שָׁמַיִם'], answer:2, explain:'ביום בהיר — שמיים כחולים.'},
+],
+};
+
+// ═══════════════════════════════════════════════════════════════
+// GAME ENGINE
+// ═══════════════════════════════════════════════════════════════
+const QBK = QB; // alias
+const QPL = 10;
+const WC = {
+  shapes:  {color:'#5b9cf6',c2:'#3a82e8',acc:'#5b9cf6',icon:'◆',name:'עולם הצורות'},
+  numbers: {color:'#f4a636',c2:'#e88c10',acc:'#f4a636',icon:'🔢',name:'עולם המספרים'},
+  words:   {color:'#9b59b6',c2:'#7d3c98',acc:'#9b59b6',icon:'📚',name:'עולם המילים'},
+};
+const progress = {shapes:{},numbers:{},words:{}};
+let G = {world:null,level:1,qs:[],idx:0,score:0,hearts:3,correct:0,wrong:0,t0:0,timer:null,answered:false};
+
+function seededShuffle(arr,seed){
+  const a=[...arr]; let s=Math.abs(seed)+1;
+  for(let i=a.length-1;i>0;i--){s=(s*1103515245+12345)&0x7fffffff;const j=s%(i+1);[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+function shuffle(arr){return seededShuffle(arr, Date.now()%99991);}
+function getLevels(w){return Math.ceil(QBK[w].length/QPL);}
+function getLevelQs(w,lv){
+  const all=[...QBK[w]], seed=lv*17+w.length;
+  const sh=seededShuffle(all,seed);
+  const start=(lv-1)*QPL, sl=sh.slice(start,start+QPL);
+  if(sl.length<QPL){const ex=sh.slice(0,QPL-sl.length);return[...sl,...ex];}
+  return sl;
+}
+
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function goHome(){clearInterval(G.timer);showScreen('home');}
+function backToLevels(){clearInterval(G.timer);showLevelSelect(G.world);}
+function retryLevel(){startLevel(G.world,G.level);}
+
+function initInfo(){
+  ['shapes','numbers','words'].forEach(w=>{
+    document.getElementById(w+'-info').textContent=getLevels(w)+' שלבים';
+  });
+}
+
+function showLevelSelect(world){
+  G.world=world;
+  const wc=WC[world];
+  setWorldColors(wc);
+  document.getElementById('ls-title').textContent=wc.name+' '+wc.icon;
+  const grid=document.getElementById('levels-grid');
+  grid.innerHTML='';
+
+  // Trial / paid banner
+  let banner=document.getElementById('trial-banner');
+  if(!banner){
+    banner=document.createElement('div');
+    banner.id='trial-banner';
+    banner.className='trial-banner';
+    document.getElementById('level-select').insertBefore(banner,grid);
+  }
+  if(typeof isPaid==='function' && isPaid()){
+    banner.style.display='none';
+  } else if(typeof trialLeft==='function'){
+    const left=trialLeft(world);
+    banner.style.display='block';
+    if(left>0){
+      banner.style.background='#fff3e0'; banner.style.color='#e07800';
+      banner.textContent=`🆓 נשארו ${left} שאלות חינם בתחום זה`;
+    } else {
+      banner.style.background='#fdeef2'; banner.style.color='#e74c6e';
+      banner.textContent='🔒 ניצלת את כל השאלות החינמיות — הירשם לגישה מלאה';
+    }
+  } else { banner.style.display='none'; }
+
+  const count=getLevels(world);
+  for(let i=1;i<=count;i++){
+    const btn=document.createElement('div');
+    const p=progress[world][i];
+    const stars=p?p.stars:0;
+    const blocked=typeof isPaid==='function' && !isPaid() && typeof trialLeft==='function' && trialLeft(world)===0;
+    btn.className='level-btn'+(p?' completed':'');
+    btn.innerHTML=`<div class="lv-num" style="color:${blocked?'#ccc':wc.color}">${blocked?'🔒':i}</div>
+      <div class="lv-stars">${stars>0?'⭐'.repeat(stars)+'☆'.repeat(3-stars):'☆☆☆'}</div>
+      <div class="lv-lbl">${blocked?'הרשמה':p?'שוחק שוב':'חדש!'}</div>`;
+    btn.onclick=blocked
+      ? ()=>openPaywall(world)
+      : ()=>(typeof _startWithTrial==='function'?_startWithTrial(world,i):startLevel(world,i));
+    grid.appendChild(btn);
+  }
+  showScreen('level-select');
+}
+
+function setWorldColors(wc){
+  document.documentElement.style.setProperty('--wc',wc.color);
+  document.documentElement.style.setProperty('--wc2',wc.c2);
+  document.documentElement.style.setProperty('--wa',wc.acc);
+}
+
+function startLevel(world,level){
+  G={world,level,qs:shuffle([...getLevelQs(world,level)]),idx:0,score:0,hearts:3,correct:0,wrong:0,t0:Date.now(),timer:null,answered:false,log:[],qStart:0};
+  setWorldColors(WC[world]);
+  document.getElementById('world-title-bar').textContent=WC[world].name+' שלב '+level;
+  updateHearts(); updateScore();
+  clearInterval(G.timer);
+  let secs=0;
+  document.getElementById('timer').textContent=0;
+  G.timer=setInterval(()=>{secs++;document.getElementById('timer').textContent=secs;},1000);
+  showScreen('game');
+  document.getElementById('fb-overlay').classList.remove('visible');
+  renderQ();
+}
+
+function renderQ(){
+  if(G.idx>=G.qs.length){endGame();return;}
+  G.answered=false;
+  G.qStart=Date.now();
+  const q=G.qs[G.idx];
+  document.getElementById('prog-lbl').textContent=`${G.idx}/${G.qs.length}`;
+  document.getElementById('prog-fill').style.width=((G.idx/G.qs.length)*100)+'%';
+
+  const qa=document.getElementById('q-area'), oa=document.getElementById('opts-area');
+  qa.innerHTML=''; oa.innerHTML='';
+
+  // Label
+  const lbl=document.createElement('div'); lbl.className='q-label'; lbl.textContent=q.label||''; qa.appendChild(lbl);
+
+  // SVG drawing if exists
+  if(q.svg){
+    const wrap=document.createElement('div'); wrap.className='q-drawing';
+    wrap.innerHTML=q.svg(); qa.appendChild(wrap);
+  }
+
+  // Passage
+  if(q.passage){
+    const rt=document.createElement('div'); rt.className='reading-title'; rt.textContent='קטע הקריאה:'; qa.appendChild(rt);
+    const rp=document.createElement('div'); rp.className='reading-passage'; rp.textContent=q.passage; qa.appendChild(rp);
+  }
+
+  // Question text card (only if there's text)
+  if(q.question){
+    const card=document.createElement('div'); card.className='q-card '+G.world+'-q';
+    const qt=document.createElement('div'); qt.className='q-text'; qt.textContent=q.question; card.appendChild(qt);
+    qa.appendChild(card);
+  }
+
+  // Options (no shuffling — keep original order to match answer index)
+  const lbls=['א','ב','ג','ד'];
+  q.options.forEach((opt,i)=>{
+    const btn=document.createElement('button'); btn.className='opt-btn';
+    btn.innerHTML=`<span>${opt}</span><span class="opt-lbl">${lbls[i]}</span>`;
+    btn.onclick=()=>selectAnswer(i,btn);
+    oa.appendChild(btn);
+  });
+}
+
+function selectAnswer(idx,btn){
+  if(G.answered) return;
+  G.answered=true;
+  const q=G.qs[G.idx];
+  const allBtns=document.querySelectorAll('#opts-area .opt-btn');
+  allBtns.forEach((b,i)=>{b.disabled=true; if(i===q.answer)b.classList.add('correct');});
+  const correct=idx===q.answer;
+  if(!correct) btn.classList.add('wrong');
+  const qTime=Math.round((Date.now()-G.qStart)/1000);
+  G.log.push({q, correct, userIdx:idx, time:qTime});
+  if(typeof onQuestionAnswered==='function') onQuestionAnswered();
+  if(correct){G.correct++;G.score+=10;updateScore();showFB(true,q.explain);confetti();}
+  else{G.wrong++;loseHeart();showFB(false,'✅ נכון: '+q.options[q.answer]+'\n'+(q.explain||''));}
+}
+
+function skipQ(){
+  if(G.answered)return;
+  // Move question to end of queue, no error counted
+  const q=G.qs.splice(G.idx,1)[0];
+  G.qs.push(q);
+  // Track how many times each question was skipped to avoid infinite loop
+  q._skips=(q._skips||0)+1;
+  if(q._skips>=2){
+    // Second time seeing it — treat as wrong
+    G.answered=true;
+    document.querySelectorAll('#opts-area .opt-btn').forEach((b,i)=>{b.disabled=true;if(i===q.answer)b.classList.add('correct');});
+    const qTime=Math.round((Date.now()-G.qStart)/1000);
+    G.log.push({q, correct:false, userIdx:-1, time:qTime, skipped:true});
+    if(typeof onQuestionAnswered==='function') onQuestionAnswered();
+    G.wrong++;loseHeart();
+    showFB(false,'⏭ דילגת פעמיים. '+(q.explain||''));
+    return;
+  }
+  // First skip — just move on silently
+  renderQ();
+}
+
+function iKnew(){
+  if(G.answered)return; G.answered=true;
+  const q=G.qs[G.idx];
+  document.querySelectorAll('#opts-area .opt-btn').forEach((b,i)=>{b.disabled=true;if(i===q.answer)b.classList.add('correct');});
+  const qTime=Math.round((Date.now()-G.qStart)/1000);
+  G.log.push({q, correct:true, userIdx:q.answer, time:qTime, knew:true});
+  if(typeof onQuestionAnswered==='function') onQuestionAnswered();
+  G.correct++;updateScore();showFB(true,'💜 בפעם הבאה תלחץ! '+(q.explain||''),true);
+}
+
+function showFB(correct,explain,knew){
+  document.getElementById('fb-emoji').textContent=correct?(knew?'💜':'🎉'):'';
+  const t=document.getElementById('fb-title');
+  t.textContent=correct?(knew?'כבר ידעת!':'נכון! 🎊'):'לא נורא, פעם הבאה תדע';
+  t.className='fb-title '+(correct?'correct':'wrong');
+  const el=document.getElementById('fb-explain');
+  if(explain){
+    el.innerHTML=explain.split('\n').map(line=>{
+      // Hebrew chars = RTL, otherwise LTR
+      const isHeb=/[\u05D0-\u05EA]/.test(line);
+      const dir=isHeb?'rtl':'ltr';
+      return `<div style="direction:${dir};text-align:center;font-size:14px;color:#444;line-height:1.9;font-weight:600;">${line}</div>`;
+    }).join('');
+  } else { el.innerHTML=''; }
+  document.getElementById('fb-overlay').classList.add('visible');
+}
+
+function nextQ(){
+  document.getElementById('fb-overlay').classList.remove('visible');
+  if(typeof isPaid==='function' && !isPaid() && typeof trialLeft==='function' && trialLeft(G.world)===0){
+    endGame(); return;
+  }
+  G.idx++; renderQ();
+}
+
+function loseHeart(){G.hearts=Math.max(0,G.hearts-1);updateHearts();}
+function updateHearts(){document.querySelectorAll('#hearts .heart').forEach((h,i)=>h.classList.toggle('lost',i>=G.hearts));}
+function updateScore(){document.getElementById('score-disp').textContent=G.score;}
+
+function endGame(){
+  clearInterval(G.timer);
+  document.getElementById('fb-overlay').classList.remove('visible');
+  const tot=G.correct+G.wrong, pct=tot>0?Math.round((G.correct/tot)*100):0;
+  const elapsed=Math.round((Date.now()-G.t0)/1000);
+  const stars=pct>=90?3:pct>=70?2:pct>=50?1:0;
+  const prev=progress[G.world][G.level];
+  if(!prev||stars>prev.stars) progress[G.world][G.level]={stars,pct};
+  document.getElementById('res-score').textContent=pct+'%';
+  document.getElementById('res-stars').textContent='⭐'.repeat(stars)+'☆'.repeat(3-stars);
+  document.getElementById('res-sub').textContent=WC[G.world].name+' — שלב '+G.level;
+  document.getElementById('s-correct').textContent=G.correct;
+  document.getElementById('s-wrong').textContent=G.wrong;
+  document.getElementById('s-time').textContent=elapsed;
+  if(pct>=80){document.getElementById('res-emoji').textContent='🏆';document.getElementById('res-title').textContent='מדהים!';confetti(60);}
+  else if(pct>=50){document.getElementById('res-emoji').textContent='⭐';document.getElementById('res-title').textContent='כל הכבוד!';}
+  else{document.getElementById('res-emoji').textContent='💪';document.getElementById('res-title').textContent='תתאמן עוד!';}
+  buildReport();
+  showScreen('results');
+}
+
+function buildReport(){
+  const list=document.getElementById('report-list');
+  list.innerHTML='';
+  G.log.forEach((entry,i)=>{
+    const {q,correct,userIdx,time,skipped,knew}=entry;
+    const item=document.createElement('div');
+    item.className='report-item '+(correct?'correct-item':'wrong-item');
+
+    const statusHtml=correct
+      ? `<span class="report-item-status ok">✅ נכון</span>`
+      : `<span class="report-item-status err">❌ טעות</span>`;
+
+    const timeHtml=`<span>⏱ ${time}ש׳</span>`;
+    const numHtml=`<span>שאלה ${i+1}</span>`;
+
+    let answerLine='';
+    if(!correct && userIdx>=0){
+      answerLine=`<div class="report-item-answer">תשובתך: ${q.options[userIdx]}</div>
+                  <div class="report-item-correct-ans">✅ נכון: ${q.options[q.answer]}</div>`;
+    } else if(skipped){
+      answerLine=`<div class="report-item-answer">⏭ דילגת</div>
+                  <div class="report-item-correct-ans">✅ נכון: ${q.options[q.answer]}</div>`;
+    }
+
+    item.innerHTML=`
+      <div class="report-item-top">
+        <span class="report-item-label">${q.label||''}</span>
+        ${statusHtml}
+      </div>
+      <div class="report-item-q">${(q.question||'').split('\n')[0]}</div>
+      ${answerLine}
+      <div class="report-item-meta">${numHtml}${timeHtml}</div>
+      <button class="review-btn" onclick="openReview(${i})">🔍 סקירה והסבר</button>
+    `;
+    list.appendChild(item);
+  });
+}
+
+function openReview(idx){
+  const {q,correct,userIdx,skipped}=G.log[idx];
+  const wc=WC[G.world];
+  document.documentElement.style.setProperty('--wc',wc.color);
+  document.documentElement.style.setProperty('--wc2',wc.c2);
+  document.documentElement.style.setProperty('--wa',wc.acc);
+
+  document.getElementById('rv-title').textContent=(q.label||'סקירת שאלה');
+
+  // Drawing
+  const draw=document.getElementById('rv-drawing');
+  draw.innerHTML=q.svg ? q.svg() : '';
+
+  // Question text
+  document.getElementById('rv-qtext').textContent=q.question||'';
+
+  // Options
+  const optsEl=document.getElementById('rv-options');
+  const lbls=['א','ב','ג','ד'];
+  optsEl.innerHTML=q.options.map((opt,i)=>{
+    let cls='review-opt';
+    if(i===q.answer) cls+=' correct';
+    else if(i===userIdx && !correct) cls+=' user-wrong';
+    const mark = i===q.answer ? '✅' : (i===userIdx&&!correct ? '❌' : lbls[i]);
+    return `<div class="${cls}"><span>${opt}</span><span style="font-weight:800;font-size:13px">${mark}</span></div>`;
+  }).join('');
+
+  // Explain
+  const exEl=document.getElementById('rv-explain');
+  const exp=q.explain||'';
+  exEl.innerHTML=exp.split('\n').map(line=>{
+    const isHeb=/[\u05D0-\u05EA]/.test(line);
+    return `<div style="direction:${isHeb?'rtl':'ltr'};text-align:center;font-size:14px;color:#444;line-height:1.9;font-weight:600;">${line}</div>`;
+  }).join('');
+
+  document.getElementById('review-overlay').classList.add('visible');
+}
+
+function closeReview(e){
+  if(!e||e.target===document.getElementById('review-overlay')||e.target.classList.contains('review-close')){
+    document.getElementById('review-overlay').classList.remove('visible');
+  }
+}
+
+function confetti(n=25){
+  const w=document.getElementById('confetti'); w.innerHTML='';
+  const cols=['#e74c6e','#f4a636','#5b9cf6','#3ec97a','#9b59b6','#ffd700'];
+  for(let i=0;i<n;i++){
+    const el=document.createElement('div'); el.className='cp';
+    el.style.cssText=`left:${Math.random()*100}%;background:${cols[i%cols.length]};width:${6+Math.random()*8}px;height:${6+Math.random()*8}px;--d:${(Math.random()-.5)*180}px;animation-duration:${1.5+Math.random()*2}s;animation-delay:${Math.random()*.4}s;border-radius:${Math.random()>.5?'50%':'2px'};`;
+    w.appendChild(el);
+    el.addEventListener('animationend',()=>el.remove());
+  }
+}
+
+
+
+// ════════════════════════════════════════════════════════════════
+//  SUPABASE + STRIPE INTEGRATION
+//  Setup instructions at the bottom of this block
+// ════════════════════════════════════════════════════════════════
+
+// ─── ⚙️  YOUR KEYS — replace all 3 before going live ──────────
+const SUPABASE_URL      = 'https://fgvqhzudecvjuyhyvehj.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZndnFoenVkZWN2anV5aHl2ZWhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyNzA1NTMsImV4cCI6MjA4OTg0NjU1M30.YX-k_KKSkIHdwD9yXwNlnPnuZm1QSM3uHT1J1bW6_qo';
+const STRIPE_PUB_KEY    = 'pk_live_YOUR_STRIPE_PUBLISHABLE_KEY';
+// Stripe Price ID (create in Stripe dashboard → Products → add ₪39.90 one-time price)
+const STRIPE_PRICE_ID   = 'price_YOUR_PRICE_ID';
+// ──────────────────────────────────────────────────────────────
+
+const TRIAL_LIMIT = 3;   // free questions per world
+const PRICE_ILS   = 39.90;
+
+// ─── Supabase client (lazy loaded) ────────────────────────────
+let _sb = null;
+async function sb() {
+  if (_sb) return _sb;
+  if (!window.__supabase) {
+    await new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+      s.onload = res; s.onerror = rej;
+      document.head.appendChild(s);
+    });
+  }
+  _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  return _sb;
+}
+
+// ─── Stripe client (lazy loaded) ──────────────────────────────
+let _stripe = null;
+async function getStripe() {
+  if (_stripe) return _stripe;
+  await new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = 'https://js.stripe.com/v3/';
+    s.onload = res; s.onerror = rej;
+    document.head.appendChild(s);
+  });
+  _stripe = Stripe(STRIPE_PUB_KEY);
+  return _stripe;
+}
+
+// ─── Auth state ────────────────────────────────────────────────
+let currentUser  = null;   // Supabase user object
+let currentPaid  = false;  // fetched from users_paid table
+
+async function loadAuthState() {
+  try {
+    const client = await sb();
+    const { data: { session } } = await client.auth.getSession();
+    if (!session) { currentUser = null; currentPaid = false; return; }
+    currentUser = session.user;
+    // Check paid status
+    const { data } = await client
+      .from('users_paid')
+      .select('paid_at')
+      .eq('email', currentUser.email)
+      .maybeSingle();
+    currentPaid = !!data;
+  } catch (e) {
+    // Supabase not configured yet — fall back to localStorage demo mode
+    currentPaid = localStorage.getItem('hg_paid') === '1';
+  }
+}
+
+function isPaid()            { return currentPaid || localStorage.getItem('hg_paid') === '1'; }
+function getTrialUsed(w)     { return parseInt(localStorage.getItem('hg_trial_' + w) || '0'); }
+function incTrialUsed(w)     { localStorage.setItem('hg_trial_' + w, getTrialUsed(w) + 1); }
+function trialLeft(w)        { return Math.max(0, TRIAL_LIMIT - getTrialUsed(w)); }
+
+// Called after each answered question (correct, wrong, or skipped)
+function onQuestionAnswered() {
+  if (isPaid()) return;
+  incTrialUsed(G.world);
+  if (trialLeft(G.world) === 0) {
+    // No more free questions — end game after showing feedback
+    const origNextQ = window._trialNextQ;
+    window._trialNextQ = function() {
+      document.getElementById('fb-overlay').classList.remove('visible');
+      endGame();
+    };
+  }
+}
+
+// ─── Handle Stripe redirect return ────────────────────────────
+(async function checkReturn() {
+  const p = new URLSearchParams(window.location.search);
+  if (p.get('paid') === '1') {
+    history.replaceState({}, '', location.pathname);
+    // Supabase user should now be in users_paid (written by webhook)
+    await loadAuthState();
+    if (isPaid()) {
+      _showSuccessCard();
+      showScreen('paywall');
+    }
+  } else {
+    await loadAuthState();
+  }
+})();
+
+// ─── Open paywall ──────────────────────────────────────────────
+function openPaywall(world) {
+  G.world = world || G.world || 'shapes';
+  // If already paid, just go home
+  if (isPaid()) { showScreen('home'); return; }
+  // If already logged in as a user
+  if (currentUser) {
+    document.getElementById('pw-already-email').textContent = currentUser.email;
+    document.getElementById('pw-form-card').style.display    = 'none';
+    document.getElementById('pw-already-card').style.display = 'block';
+    document.getElementById('pw-success-card').style.display = 'none';
+    showScreen('paywall');
+    return;
+  }
+  const used = TRIAL_LIMIT - trialLeft(G.world);
+  document.getElementById('pw-sub-msg').textContent =
+    `ניצלת ${used} מתוך ${TRIAL_LIMIT} שאלות חינם בתחום זה.\nקבל גישה מלאה לכל השאלות`;
+  document.getElementById('pw-form-card').style.display    = 'block';
+  document.getElementById('pw-success-card').style.display = 'none';
+  document.getElementById('pw-already-card').style.display = 'none';
+  document.getElementById('pw-err').textContent = '';
+  showScreen('paywall');
+}
+
+function _showSuccessCard() {
+  document.getElementById('pw-form-card').style.display    = 'none';
+  document.getElementById('pw-success-card').style.display = 'flex';
+  document.getElementById('pw-already-card').style.display = 'none';
+}
+
+// ─── Checkout flow ─────────────────────────────────────────────
+async function startCheckout() {
+  const email = (document.getElementById('pw-email').value || '').trim();
+  const name  = (document.getElementById('pw-name').value  || '').trim();
+  const errEl = document.getElementById('pw-err');
+  const btn   = document.getElementById('pw-pay-btn');
+
+  errEl.textContent = '';
+  if (!name)                              { errEl.textContent = 'נא להזין שם מלא'; return; }
+  if (!email || !email.includes('@'))     { errEl.textContent = 'נא להזין אימייל תקין'; return; }
+
+  btn.disabled     = true;
+  btn.textContent  = '⏳ מתחבר...';
+
+  // ── DEMO MODE (keys not yet replaced) ────────────────────────
+  const demoMode = SUPABASE_URL.includes('YOURPROJECT') || STRIPE_PUB_KEY.includes('YOUR');
+  if (demoMode) {
+    await new Promise(r => setTimeout(r, 1200));
+    localStorage.setItem('hg_paid', '1');
+    localStorage.setItem('hg_email', email);
+    currentPaid = true;
+    _showSuccessCard();
+    btn.disabled = false; btn.textContent = 'לתשלום מאובטח 🔒';
+    return;
+  }
+
+  try {
+    // 1. Sign up / sign in user in Supabase (magic link or OTP can be added later)
+    //    For now: create account with random password (user pays → webhook marks them paid)
+    const client = await sb();
+    const tempPass = Math.random().toString(36).slice(2) + '!A1';
+    await client.auth.signUp({ email, password: tempPass,
+      options: { data: { full_name: name } } });
+
+    // 2. Redirect to Stripe Checkout
+    const stripe  = await getStripe();
+    const { error } = await stripe.redirectToCheckout({
+      lineItems:         [{ price: STRIPE_PRICE_ID, quantity: 1 }],
+      mode:              'payment',
+      customerEmail:     email,
+      successUrl:        location.origin + location.pathname + '?paid=1',
+      cancelUrl:         location.origin + location.pathname,
+      clientReferenceId: email,
+    });
+    if (error) throw error;
+
+  } catch (err) {
+    errEl.textContent = 'שגיאה: ' + (err.message || 'נסה שוב');
+    btn.disabled = false; btn.textContent = 'לתשלום מאובטח 🔒';
+  }
+}
+
+// ─── Level select — inject trial UI ───────────────────────────
+// showLevelSelect merged into main function above
+
+function _startWithTrial(world, level) {
+  if (!isPaid() && trialLeft(world) === 0) { openPaywall(world); return; }
+  startLevel(world, level);
+}
+
+// ─── Count trial after each game ──────────────────────────────
+// endGame trial logic merged above
+
+/*
+════════════════════════════════════════════════════════════════
+  SETUP CHECKLIST
+════════════════════════════════════════════════════════════════
+
+  1. SUPABASE PROJECT
+     a. Create project at supabase.com
+     b. Run in SQL editor:
+          CREATE TABLE users_paid (
+            email       TEXT PRIMARY KEY,
+            paid_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+            stripe_session TEXT
+          );
+          ALTER TABLE users_paid ENABLE ROW LEVEL SECURITY;
+          CREATE POLICY "service role only"
+            ON users_paid FOR ALL USING (false);
+     c. Copy Project URL + anon key → paste above
+
+  2. STRIPE
+     a. Create product: "הילד גאון" → ₪39.90 one-time
+     b. Copy Price ID → paste as STRIPE_PRICE_ID above
+     c. Copy Publishable key → paste as STRIPE_PUB_KEY above
+
+  3. SUPABASE EDGE FUNCTION (webhook)
+     a. Install Supabase CLI: npm i -g supabase
+     b. supabase functions new stripe-webhook
+     c. Paste the code from stripe_webhook.ts (separate file)
+     d. supabase secrets set STRIPE_SECRET_KEY=sk_live_...
+     e. supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_...
+     f. supabase secrets set SUPABASE_SERVICE_ROLE_KEY=...
+     g. supabase functions deploy stripe-webhook
+     h. In Stripe dashboard → Webhooks → add endpoint:
+          https://YOURPROJECT.supabase.co/functions/v1/stripe-webhook
+          Event: checkout.session.completed
+
+  4. HOSTING
+     - Upload this HTML file to any static host:
+       Vercel, Netlify, Firebase Hosting, or even Supabase Storage.
+     - Make sure successUrl uses your real domain.
+
+════════════════════════════════════════════════════════════════
+*/
+
+initInfo();
+
+// Bulb animation
+const bulbEl = document.getElementById('bulb-logo');
+let bulbState = true;
+function toggleBulb(){
+  bulbState = !bulbState;
+  const svg = document.getElementById('bulb-svg');
+  if(bulbState){
+    svg.classList.remove('bulb-off');
+    svg.classList.add('bulb-on');
+    document.getElementById('bulb-glass').setAttribute('fill','#ffe066');
+    document.getElementById('bulb-rays').setAttribute('opacity','1');
+  } else {
+    svg.classList.remove('bulb-on');
+    svg.classList.add('bulb-off');
+    document.getElementById('bulb-glass').setAttribute('fill','#ddd');
+    document.getElementById('bulb-rays').setAttribute('opacity','0');
+  }
+}
+if(bulbEl){ 
+  document.getElementById('bulb-svg').classList.add('bulb-on');
+  bulbEl.addEventListener('click', toggleBulb);
+  setInterval(toggleBulb, 1800);
+}
+</script>
+</body>
+</html>
