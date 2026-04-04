@@ -1335,7 +1335,7 @@ function confetti(n=25){
 // ─── ⚙️  YOUR KEYS — replace all 3 before going live ──────────
 const SUPABASE_URL      = 'https://fgvqhzudecvjuyhyvehj.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZndnFoenVkZWN2anV5aHl2ZWhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyNzA1NTMsImV4cCI6MjA4OTg0NjU1M30.YX-k_KKSkIHdwD9yXwNlnPnuZm1QSM3uHT1J1bW6_qo';
-const STRIPE_PUB_KEY    = 'pk_test_51TE8xU2Mhvng2SkT7aVZ51COszs3eKjemgaLdYOXP7eQdADibDjYuJgfPYiSwgwQacc1nJQof7m0d6mIeKyFRS2A001dsnVDzn';
+const STRIPE_PUB_KEY    = 'pk_live_51TE8xFRsFzgfrHdiM4HOmCT3NImwmUzlxDjk14OV4iBAAONzqcTOY3ChxHYIV0zjjzPRBZYOp0aSlXLsv6n9HzKw00Vi1mQ5ab';
 // Stripe Price ID (create in Stripe dashboard → Products → add ₪39.90 one-time price)
 const STRIPE_PRICE_ID   = 'price_1TGa0Z2Mhvng2SkTIxfCORTh';
 // ──────────────────────────────────────────────────────────────
@@ -1549,7 +1549,7 @@ async function startCheckout() {
   try {
     // Save email and redirect to Stripe Payment Link
     localStorage.setItem('hg_pending_email', email);
-    const paymentUrl = 'https://buy.stripe.com/test_00wcMY1fgcEzfph6ZN3F600?prefilled_email=' + encodeURIComponent(email) + '&client_reference_id=' + encodeURIComponent(email);
+    const paymentUrl = 'https://buy.stripe.com/5kQ00l1NJcrrecX4hs3ZK00?prefilled_email=' + encodeURIComponent(email) + '&client_reference_id=' + encodeURIComponent(email);
     window.location.href = paymentUrl;
 
   } catch (err) {
