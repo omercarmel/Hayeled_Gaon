@@ -15,6 +15,9 @@
     --wrong: #e74c6e; --wrong-light: #fdeef2;
     --radius: 16px; --shadow: 0 4px 24px rgba(0,0,0,0.08);
     --wc: #5b9cf6; --wc2: #9b59b6; --wa: #5b9cf6;
+    --times-color: #e84393; --times-light: #fde8f3;
+    --div-color: #16a34a; --div-light: #dcfce7;
+    --div-color: #16a085; --div-light: #e8f8f5;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Heebo', sans-serif; background: linear-gradient(135deg,#eef0f8,#f5f0fc); min-height:100vh; color:var(--text); direction:rtl; }
@@ -28,7 +31,7 @@
   @keyframes wobble { 0%,100%{transform:rotate(-8deg) scale(1)} 50%{transform:rotate(8deg) scale(1.1)} }
   .home-title { font-size:38px; font-weight:900; text-align:center; background:linear-gradient(135deg,#e74c6e,#f4a636,#5b9cf6,#9b59b6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
   .home-sub { color:var(--text-light); font-size:15px; text-align:center; margin-top:-16px; }
-  .worlds-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; width:100%; max-width:680px; }
+  .worlds-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; width:100%; max-width:480px; }
   .world-card { background:var(--card); border-radius:var(--radius); padding:22px 12px; text-align:center; cursor:pointer; transition:transform 0.2s,box-shadow 0.2s; box-shadow:var(--shadow); display:flex; flex-direction:column; align-items:center; gap:8px; }
   .world-card:hover { transform:translateY(-4px); box-shadow:0 12px 32px rgba(0,0,0,0.12); }
   .world-icon { font-size:30px; }
@@ -41,6 +44,8 @@
   .world-card[data-world=shapes] .world-lvlinfo { background:var(--shapes-light); color:var(--shapes-color); }
   .world-card[data-world=numbers] .world-lvlinfo { background:var(--numbers-light); color:var(--numbers-color); }
   .world-card[data-world=words] .world-lvlinfo { background:var(--words-light); color:var(--words-color); }
+  .world-card[data-world=times] .world-name { color:var(--times-color); }
+  .world-card[data-world=times] .world-lvlinfo { background:var(--times-light); color:var(--times-color); }
 
   /* LEVEL SELECT */
   #level-select { padding:24px 20px; gap:20px; }
@@ -255,6 +260,188 @@
     font-family:'Heebo',sans-serif; cursor:pointer; margin-top:4px;
   }
 
+
+  /* ══════════════════════════════════════════
+     TIMES TABLE WORLD
+  ══════════════════════════════════════════ */
+  #times-screen { padding:0; flex-direction:column; align-items:center; }
+  .tt-header { width:100%; max-width:500px; display:flex; align-items:center; justify-content:space-between; padding:16px 20px 0; }
+  .tt-title { font-size:20px; font-weight:900; color:var(--times-color); }
+  .tt-stats { display:flex; gap:12px; align-items:center; }
+  .tt-stat { background:white; border-radius:12px; padding:6px 12px; font-size:13px; font-weight:700; box-shadow:var(--shadow); }
+  .tt-stat.score { color:var(--times-color); }
+  .tt-stat.streak { color:#f4a636; }
+
+  /* Table selector */
+  .tt-selector { width:100%; max-width:500px; padding:16px 20px 8px; }
+  .tt-selector-title { font-size:13px; font-weight:700; color:var(--text-light); margin-bottom:10px; }
+  .tt-tables-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; }
+  .tt-tables-grid .tt-all-btn { grid-column: 1 / -1; margin-top:0; font-size:13px; padding:10px; }
+  .tt-table-btn { background:white; border:2px solid #e0e0ef; border-radius:12px; padding:8px 4px; text-align:center; cursor:pointer; font-family:Heebo,sans-serif; font-size:14px; font-weight:700; color:var(--text); transition:all 0.15s; }
+  .tt-table-btn:hover { border-color:var(--times-color); color:var(--times-color); }
+  .tt-table-btn.active { background:var(--times-light); border-color:var(--times-color); color:var(--times-color); }
+  .tt-table-btn.mastered { background:#eafaf1; border-color:var(--correct); color:var(--correct); }
+
+  /* Question area */
+  .tt-q-area { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; padding:0 20px; gap:16px; }
+  .tt-level-badge { font-size:12px; font-weight:700; color:var(--times-color); background:var(--times-light); padding:4px 14px; border-radius:20px; }
+  .tt-question-card { background:white; border-radius:24px; padding:28px 40px; text-align:center; box-shadow:0 8px 32px rgba(232,67,147,0.12); border:2px solid var(--times-light); width:100%; max-width:340px; }
+  .tt-question { font-size:42px; font-weight:900; color:var(--text); letter-spacing:2px; }
+  .tt-question span.highlight { color:var(--times-color); }
+
+  /* Example hint */
+  .tt-hint { font-size:13px; color:var(--text-light); text-align:center; background:#f8f8ff; border-radius:12px; padding:8px 16px; max-width:340px; width:100%; line-height:1.6; }
+
+  /* Answer options */
+  .tt-options { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; width:100%; max-width:340px; }
+  .tt-opt { background:white; border:2.5px solid #e0e0ef; border-radius:16px; padding:16px; font-family:Heebo,sans-serif; font-size:22px; font-weight:800; color:var(--text); cursor:pointer; transition:all 0.15s; text-align:center; }
+  .tt-opt:hover:not(:disabled) { border-color:var(--times-color); color:var(--times-color); transform:scale(1.03); }
+  .tt-opt.correct { background:var(--correct-light); border-color:var(--correct); color:var(--correct); }
+  .tt-opt.wrong { background:var(--wrong-light); border-color:var(--wrong); color:var(--wrong); }
+  .tt-opt:disabled { cursor:default; transform:none; }
+
+  /* Progress */
+  .tt-progress { width:100%; max-width:500px; padding:8px 20px; display:flex; align-items:center; gap:10px; }
+  .tt-prog-bar { flex:1; height:8px; background:#e0e0ef; border-radius:10px; overflow:hidden; }
+  .tt-prog-fill { height:100%; border-radius:10px; background:linear-gradient(90deg,var(--times-color),#f4a636); transition:width 0.4s; }
+
+  /* Reward popup */
+  .tt-reward { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) scale(0); background:white; border-radius:24px; padding:32px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.2); z-index:300; transition:transform 0.3s; max-width:300px; width:90%; }
+  .tt-reward.show { transform:translate(-50%,-50%) scale(1); }
+  .tt-reward-icon { font-size:56px; }
+  .tt-reward-title { font-size:22px; font-weight:900; margin:8px 0 4px; }
+  .tt-reward-sub { font-size:14px; color:var(--text-light); margin-bottom:16px; }
+  .tt-reward-btn { background:linear-gradient(135deg,var(--times-color),#f4a636); color:white; border:none; border-radius:50px; padding:12px 28px; font-size:15px; font-weight:700; font-family:Heebo,sans-serif; cursor:pointer; width:100%; }
+  .tt-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.4); z-index:299; display:none; }
+  .tt-overlay.show { display:block; }
+
+  /* Summary screen */
+  .tt-summary { display:flex; flex-direction:column; align-items:center; gap:16px; padding:32px 20px; width:100%; max-width:500px; }
+  .tt-summary-title { font-size:26px; font-weight:900; text-align:center; }
+  .tt-summary-score { font-size:52px; font-weight:900; background:linear-gradient(135deg,var(--times-color),#f4a636); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  .tt-table-results { width:100%; display:flex; flex-direction:column; gap:8px; }
+  .tt-table-result { background:white; border-radius:12px; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; box-shadow:var(--shadow); }
+
+  @media(max-width:400px) { .tt-question { font-size:34px; } .tt-opt { font-size:18px; padding:12px; } }
+  .tt-all-btn { margin-top:10px; width:100%; background:linear-gradient(135deg,var(--times-color),#f4a636); color:white; border:none; border-radius:14px; padding:13px 16px; font-size:14px; font-weight:800; font-family:Heebo,sans-serif; cursor:pointer; transition:opacity 0.2s; }
+  .tt-all-btn:hover { opacity:0.88; }
+  .tt-all-btn.active-mode { box-shadow:0 0 0 3px white, 0 0 0 5px var(--times-color); }
+
+
+  /* ══════════════════════════════════════════
+     DIVISION WORLD
+  ══════════════════════════════════════════ */
+  #div-screen { padding:0; flex-direction:column; align-items:center; }
+  .div-header { width:100%; max-width:500px; display:flex; align-items:center; justify-content:space-between; padding:16px 20px 0; }
+  .div-title { font-size:20px; font-weight:900; color:var(--div-color); }
+  .div-stats { display:flex; gap:10px; }
+  .div-stat { background:white; border-radius:12px; padding:6px 12px; font-size:13px; font-weight:700; box-shadow:var(--shadow); }
+
+  .div-progress { width:100%; max-width:500px; padding:8px 20px; display:flex; align-items:center; gap:10px; }
+  .div-prog-bar { flex:1; height:8px; background:#e0e0ef; border-radius:10px; overflow:hidden; }
+  .div-prog-fill { height:100%; border-radius:10px; background:linear-gradient(90deg,var(--div-color),#3ec97a); transition:width 0.4s; }
+
+  .div-level-badge { font-size:12px; font-weight:700; color:var(--div-color); background:var(--div-light); padding:4px 14px; border-radius:20px; }
+
+  .div-q-area { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; padding:0 20px 8px; gap:12px; }
+
+  .div-question-card { background:white; border-radius:24px; padding:24px 40px; text-align:center; box-shadow:0 8px 32px rgba(22,160,133,0.12); border:2px solid var(--div-light); width:100%; max-width:340px; }
+  .div-question { font-size:40px; font-weight:900; color:var(--text); letter-spacing:2px; direction:ltr; unicode-bidi:embed; }
+  .div-question span.dh { color:var(--div-color); }
+
+  /* Graphic explanation area */
+  .div-visual { width:100%; max-width:400px; background:white; border-radius:16px; padding:14px 16px; box-shadow:0 2px 12px rgba(0,0,0,0.06); border:2px solid var(--div-color); display:none; flex-direction:column; gap:10px; align-items:center; animation: fadeIn 0.4s ease; }
+  .div-visual.show { display:flex; }
+  .div-visual-title { font-size:13px; font-weight:800; color:var(--div-color); background:var(--div-light); padding:4px 14px; border-radius:20px; }
+  .div-visual-groups { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+  .div-group { background:var(--div-light); border:2.5px solid var(--div-color); border-radius:12px; padding:8px 10px; display:flex; flex-wrap:wrap; gap:5px; justify-content:center; min-width:40px; min-height:40px; align-items:center; }
+  .div-dot { width:20px; height:20px; border-radius:50%; background:var(--div-color); display:inline-block; box-shadow:0 1px 3px rgba(0,0,0,0.2); }
+  .div-visual-text { font-size:13px; font-weight:600; color:var(--text); text-align:center; }
+
+  .div-options { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; width:100%; max-width:340px; }
+  .div-opt { background:white; border:2.5px solid #e0e0ef; border-radius:16px; padding:14px; font-family:Heebo,sans-serif; font-size:22px; font-weight:800; color:var(--text); cursor:pointer; transition:all 0.15s; text-align:center; }
+  .div-opt:hover:not(:disabled) { border-color:var(--div-color); color:var(--div-color); transform:scale(1.03); }
+  .div-opt.correct { background:var(--correct-light); border-color:var(--correct); color:var(--correct); }
+  .div-opt.wrong { background:var(--wrong-light); border-color:var(--wrong); color:var(--wrong); }
+  .div-opt:disabled { cursor:default; transform:none; }
+
+  .div-next-btn { background:linear-gradient(135deg,var(--div-color),#3ec97a); color:white; border:none; border-radius:50px; padding:12px 32px; font-size:15px; font-weight:700; font-family:Heebo,sans-serif; cursor:pointer; width:100%; max-width:340px; display:none; }
+  .div-next-btn.show { display:block; }
+
+  /* Selector */
+  .div-selector { width:100%; max-width:500px; padding:10px 20px 4px; }
+  .div-selector-title { font-size:13px; font-weight:700; color:var(--text-light); margin-bottom:8px; }
+  .div-tables-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; }
+  .div-table-btn { background:white; border:2px solid #e0e0ef; border-radius:12px; padding:7px 4px; text-align:center; cursor:pointer; font-family:Heebo,sans-serif; font-size:13px; font-weight:700; color:var(--text); transition:all 0.15s; }
+  .div-table-btn:hover { border-color:var(--div-color); color:var(--div-color); }
+  .div-table-btn.active { background:var(--div-light); border-color:var(--div-color); color:var(--div-color); }
+  .div-table-btn.mastered { background:#eafaf1; border-color:var(--correct); color:var(--correct); }
+  .div-tables-grid .div-all-btn { grid-column:1/-1; }
+  .div-all-btn { width:100%; background:linear-gradient(135deg,var(--div-color),#3ec97a); color:white; border:none; border-radius:14px; padding:10px 16px; font-size:13px; font-weight:800; font-family:Heebo,sans-serif; cursor:pointer; transition:opacity 0.2s; }
+  .div-all-btn:hover { opacity:0.88; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+  .div-all-btn.active-mode { box-shadow:0 0 0 3px white, 0 0 0 5px var(--div-color); }
+
+
+  /* ══════════════════════════════════════════
+     DIVISION WORLD
+  ══════════════════════════════════════════ */
+  #div-screen { padding:0; flex-direction:column; align-items:center; }
+  .div-header { width:100%; max-width:500px; display:flex; align-items:center; justify-content:space-between; padding:16px 20px 0; }
+  .div-title { font-size:20px; font-weight:900; color:var(--div-color); }
+  .div-stats { display:flex; gap:10px; }
+  .div-stat { background:white; border-radius:12px; padding:6px 12px; font-size:13px; font-weight:700; box-shadow:var(--shadow); color:var(--div-color); }
+
+  /* Divisor selector */
+  .div-selector { width:100%; max-width:500px; padding:12px 20px 6px; }
+  .div-tables-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; }
+  .div-table-btn { background:white; border:2px solid #e0e0ef; border-radius:12px; padding:8px 4px; text-align:center; cursor:pointer; font-family:Heebo,sans-serif; font-size:14px; font-weight:700; color:var(--text); transition:all 0.15s; }
+  .div-table-btn:hover { border-color:var(--div-color); color:var(--div-color); }
+  .div-table-btn.active { background:var(--div-light); border-color:var(--div-color); color:var(--div-color); }
+  .div-table-btn.mastered { background:#dcfce7; border-color:var(--div-color); color:var(--div-color); }
+  .div-tables-grid .div-all-btn { grid-column: 1 / -1; }
+  .div-all-btn { width:100%; background:linear-gradient(135deg,var(--div-color),#22c55e); color:white; border:none; border-radius:14px; padding:10px 16px; font-size:13px; font-weight:800; font-family:Heebo,sans-serif; cursor:pointer; transition:opacity 0.2s; }
+  .div-all-btn:hover { opacity:0.88; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+  .div-all-btn.active-mode { box-shadow:0 0 0 3px white, 0 0 0 5px var(--div-color); }
+
+  /* Progress */
+  .div-progress { width:100%; max-width:500px; padding:6px 20px; display:flex; align-items:center; gap:10px; }
+  .div-prog-bar { flex:1; height:8px; background:#e0e0ef; border-radius:10px; overflow:hidden; }
+  .div-prog-fill { height:100%; border-radius:10px; background:linear-gradient(90deg,var(--div-color),#22c55e); transition:width 0.4s; }
+
+  /* Question area */
+  .div-q-area { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; padding:0 16px; gap:10px; }
+  .div-level-badge { font-size:12px; font-weight:700; color:var(--div-color); background:var(--div-light); padding:4px 14px; border-radius:20px; }
+  .div-question-card { background:white; border-radius:24px; padding:22px 32px; text-align:center; box-shadow:0 8px 32px rgba(22,163,74,0.12); border:2px solid var(--div-light); width:100%; max-width:340px; }
+  .div-question { font-size:38px; font-weight:900; color:var(--text); letter-spacing:2px; }
+  .div-question span.dh { color:var(--div-color); }
+
+  /* Graphic explanation */
+  .div-graphic { width:100%; max-width:380px; background:white; border-radius:16px; padding:14px 16px; box-shadow:0 4px 16px rgba(0,0,0,0.07); display:none; flex-direction:column; gap:8px; align-items:center; border:2px solid var(--div-light); }
+  .div-graphic.visible { display:flex; }
+  .div-graphic-title { font-size:13px; font-weight:700; color:var(--div-color); }
+  .div-graphic-svg { width:100%; max-width:340px; }
+  .div-graphic-text { font-size:12px; color:var(--text-light); text-align:center; line-height:1.6; }
+
+  /* Options */
+  .div-options { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; width:100%; max-width:340px; }
+  .div-opt { background:white; border:2.5px solid #e0e0ef; border-radius:16px; padding:14px; font-family:Heebo,sans-serif; font-size:22px; font-weight:800; color:var(--text); cursor:pointer; transition:all 0.15s; text-align:center; }
+  .div-opt:hover:not(:disabled) { border-color:var(--div-color); color:var(--div-color); transform:scale(1.03); }
+  .div-opt.correct { background:var(--correct-light); border-color:var(--correct); color:var(--correct); }
+  .div-opt.wrong { background:var(--wrong-light); border-color:var(--wrong); color:var(--wrong); }
+  .div-opt:disabled { cursor:default; transform:none; }
+
+  /* Reward */
+  .div-reward { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) scale(0); background:white; border-radius:24px; padding:28px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.2); z-index:300; transition:transform 0.3s; max-width:300px; width:90%; }
+  .div-reward.show { transform:translate(-50%,-50%) scale(1); }
+  .div-reward-icon { font-size:52px; }
+  .div-reward-title { font-size:20px; font-weight:900; margin:8px 0 4px; }
+  .div-reward-sub { font-size:13px; color:var(--text-light); margin-bottom:14px; line-height:1.5; }
+  .div-reward-btn { background:linear-gradient(135deg,var(--div-color),#22c55e); color:white; border:none; border-radius:50px; padding:12px 28px; font-size:15px; font-weight:700; font-family:Heebo,sans-serif; cursor:pointer; width:100%; }
+  .div-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.4); z-index:299; display:none; }
+  .div-overlay.show { display:block; }
+
 </style>
 </head>
 <body>
@@ -301,6 +488,16 @@
       <div class="world-icon">📚</div><div class="world-name">עולם המילים</div>
       <div class="world-desc">יחסי מילים והשלמת משפטים</div>
       <div class="world-lvlinfo" id="words-info">טוען...</div>
+    </div>
+    <div class="world-card" data-world="times" onclick="showTimesTable()">
+      <div class="world-icon">✖️</div><div class="world-name">לוח הכפל</div>
+      <div class="world-desc">תרגול לוח הכפל עם ניקוד ופרסים</div>
+      <div class="world-lvlinfo" style="background:var(--times-light);color:var(--times-color);">10 שלבים</div>
+    </div>
+    <div class="world-card" data-world="division" onclick="showDivision()" style="grid-column:1/-1">
+      <div class="world-icon">➗</div><div class="world-name" style="color:var(--div-color)">עולם החילוק</div>
+      <div class="world-desc">חילוק עם הסברים גרפיים ויזואליים</div>
+      <div class="world-lvlinfo" style="background:var(--div-light);color:var(--div-color);">10 שלבים</div>
     </div>
   </div>
   <p style="color:var(--text-light);font-size:13px;">🎮 בחר עולם ושלב!</p>
@@ -433,6 +630,133 @@
     </div>
     <button class="pw-back-link" onclick="goHome()">← חזרה לדף הבית</button>
   </div>
+</div>
+
+<!-- TIMES TABLE SCREEN -->
+<div class="screen" id="times-screen">
+  <!-- Header -->
+  <div class="tt-header">
+    <button class="back-btn" onclick="goHome()">← בית</button>
+    <div class="tt-title">✖️ לוח הכפל</div>
+    <div class="tt-stats">
+      <div class="tt-stat score">⭐ <span id="tt-score">0</span></div>
+      <div class="tt-stat streak">🔥 <span id="tt-streak">0</span></div>
+    </div>
+  </div>
+
+  <!-- Table selector -->
+  <div class="tt-selector">
+    <div class="tt-selector-title">בחר לוח לתרגול:</div>
+    <div class="tt-tables-grid" id="tt-tables-grid"></div>
+  </div>
+
+  <!-- Progress bar -->
+  <div class="tt-progress">
+    <span style="font-size:12px;color:var(--text-light);min-width:36px;" id="tt-prog-lbl">0/10</span>
+    <div class="tt-prog-bar"><div class="tt-prog-fill" id="tt-prog-fill" style="width:0%"></div></div>
+  </div>
+
+  <!-- Question area -->
+  <div class="tt-q-area" id="tt-q-area">
+    <div class="tt-level-badge" id="tt-level-badge">לוח 1</div>
+    <div class="tt-question-card">
+      <div class="tt-question" id="tt-question">? × ? = ?</div>
+    </div>
+    <div class="tt-hint" id="tt-hint"></div>
+    <div class="tt-options" id="tt-options"></div>
+  </div>
+</div>
+
+<!-- DIVISION SCREEN -->
+<div class="screen" id="div-screen">
+  <div class="div-header">
+    <button class="back-btn" onclick="goHome()">← בית</button>
+    <div class="div-title">➗ עולם החילוק</div>
+    <div class="div-stats">
+      <div class="div-stat" style="color:var(--div-color)">⭐ <span id="div-score">0</span></div>
+      <div class="div-stat" style="color:#f4a636">🔥 <span id="div-streak">0</span></div>
+    </div>
+  </div>
+
+  <div class="div-selector">
+    <div class="div-tables-grid" id="div-tables-grid"></div>
+  </div>
+
+  <div class="div-progress">
+    <span style="font-size:12px;color:var(--text-light);min-width:36px;" id="div-prog-lbl">0/10</span>
+    <div class="div-prog-bar"><div class="div-prog-fill" id="div-prog-fill" style="width:0%"></div></div>
+  </div>
+
+  <div class="div-q-area">
+    <div class="div-level-badge" id="div-level-badge">÷ 1</div>
+
+    <div class="div-question-card">
+      <div class="div-question" id="div-question">? ÷ ? = ?</div>
+    </div>
+
+    <div class="div-options" id="div-options"></div>
+
+    <!-- Graphic visual — shown AFTER wrong answer -->
+    <div class="div-visual" id="div-visual">
+      <div class="div-visual-title" id="div-visual-title">הסבר גרפי</div>
+      <div class="div-visual-groups" id="div-visual-groups"></div>
+      <div class="div-visual-text" id="div-visual-text"></div>
+      <button class="div-next-btn show" id="div-next-btn" onclick="divNext()">השאלה הבאה ←</button>
+    </div>
+
+    <!-- standalone next btn for correct answers -->
+    <button class="div-next-btn" id="div-next-btn-correct" onclick="divNext()" style="display:none;max-width:340px;width:100%">השאלה הבאה ←</button>
+  </div>
+</div>
+
+<!-- REWARD POPUP -->
+<div class="tt-overlay" id="tt-overlay"></div>
+<div class="tt-reward" id="tt-reward">
+  <div class="tt-reward-icon" id="tt-reward-icon">🏆</div>
+  <div class="tt-reward-title" id="tt-reward-title">כל הכבוד!</div>
+  <div class="tt-reward-sub" id="tt-reward-sub">סיימת את הלוח!</div>
+  <button class="tt-reward-btn" id="tt-reward-btn" onclick="ttNextLevel()">המשך ←</button>
+</div>
+
+<!-- DIVISION SCREEN -->
+<div class="screen" id="div-screen">
+  <div class="div-header">
+    <button class="back-btn" onclick="goHome()">← בית</button>
+    <div class="div-title">➗ עולם החילוק</div>
+    <div class="div-stats">
+      <div class="div-stat">⭐ <span id="div-score">0</span></div>
+      <div class="div-stat">🔥 <span id="div-streak">0</span></div>
+    </div>
+  </div>
+  <div class="div-selector">
+    <div class="div-tables-grid" id="div-tables-grid"></div>
+  </div>
+  <div class="div-progress">
+    <span style="font-size:12px;color:var(--text-light);min-width:36px;" id="div-prog-lbl">0/10</span>
+    <div class="div-prog-bar"><div class="div-prog-fill" id="div-prog-fill" style="width:0%"></div></div>
+  </div>
+  <div class="div-q-area" id="div-q-area">
+    <div class="div-level-badge" id="div-level-badge">חילוק ב-1</div>
+    <div class="div-question-card">
+      <div class="div-question" id="div-question">? ÷ ? = ?</div>
+    </div>
+    <div class="div-options" id="div-options"></div>
+    <!-- Graphic explanation shown after answering -->
+    <div class="div-graphic" id="div-graphic">
+      <div class="div-graphic-title" id="div-graphic-title">📊 הסבר גרפי</div>
+      <div class="div-graphic-svg" id="div-graphic-svg"></div>
+      <div class="div-graphic-text" id="div-graphic-text"></div>
+    </div>
+  </div>
+</div>
+
+<!-- DIVISION REWARD -->
+<div class="div-overlay" id="div-overlay"></div>
+<div class="div-reward" id="div-reward">
+  <div class="div-reward-icon" id="div-reward-icon">🏆</div>
+  <div class="div-reward-title" id="div-reward-title">כל הכבוד!</div>
+  <div class="div-reward-sub" id="div-reward-sub"></div>
+  <button class="div-reward-btn" id="div-reward-btn" onclick="divNextAfterReward()">המשך ←</button>
 </div>
 
 <!-- REVIEW MODAL -->
@@ -1611,6 +1935,733 @@ function _startWithTrial(world, level) {
 
 ════════════════════════════════════════════════════════════════
 */
+
+
+// ══════════════════════════════════════════════════════════════
+//  TIMES TABLE WORLD
+// ══════════════════════════════════════════════════════════════
+
+const TT = {
+  currentTable: 1,
+  qIndex: 0,
+  totalQ: 10,
+  score: 0,
+  streak: 0,
+  bestStreak: 0,
+  correctCount: 0,
+  wrongCount: 0,
+  answered: false,
+  mastered: JSON.parse(localStorage.getItem('tt_mastered') || '[]'),
+  tableScores: JSON.parse(localStorage.getItem('tt_scores') || '{}'),
+};
+
+const REWARDS = [
+  { threshold: 3,  icon: '⭐', title: 'כוכב מתחיל!',    sub: 'השלמת 3 שאלות נכון ברצף!' },
+  { threshold: 5,  icon: '🌟', title: 'סופר כוכב!',     sub: '5 תשובות נכונות ברצף! מדהים!' },
+  { threshold: 10, icon: '🏆', title: 'אלוף!',          sub: '10 ברצף! אתה גאון אמיתי!' },
+  { threshold: 20, icon: '👑', title: 'מלך לוח הכפל!', sub: '20 ברצף! בלתי יאמן!' },
+];
+
+function showTimesTable() {
+  showScreen('times-screen');
+  ttBuildTableSelector();
+  ttStartTable(TT.currentTable);
+}
+
+function ttBuildTableSelector() {
+  const grid = document.getElementById('tt-tables-grid');
+  grid.innerHTML = '';
+
+  // Big "all tables" button spanning full width
+  const allBtn = document.createElement('button');
+  allBtn.id = 'tt-all-btn';
+  allBtn.className = 'tt-all-btn' + (TT.currentTable === 0 ? ' active-mode' : '');
+  allBtn.innerHTML = '🎲 אתגר הלוח המלא';
+  allBtn.onclick = ttStartAllTables;
+  grid.appendChild(allBtn);
+
+  for (let i = 1; i <= 10; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'tt-table-btn' +
+      (i === TT.currentTable ? ' active' : '') +
+      (TT.mastered.includes(i) ? ' mastered' : '');
+    btn.textContent = '× ' + i;
+    btn.onclick = () => ttStartTable(i);
+    grid.appendChild(btn);
+  }
+}
+
+function ttStartTable(n) {
+  TT.currentTable = n;
+  TT.qIndex = 0;
+  TT.correctCount = 0;
+  TT.wrongCount = 0;
+  TT.answered = false;
+  document.getElementById('tt-level-badge').textContent = 'לוח ' + n;
+  document.getElementById('tt-prog-lbl').textContent = '0/' + TT.totalQ;
+  document.getElementById('tt-prog-fill').style.width = '0%';
+  const allBtn = document.getElementById('tt-all-btn');
+  if (allBtn) allBtn.classList.remove('active-mode');
+  ttBuildTableSelector();
+  ttNextQuestion();
+}
+
+function ttNextQuestion() {
+  if (TT.qIndex >= TT.totalQ) {
+    ttShowSummary();
+    return;
+  }
+  TT.answered = false;
+
+  // Pick random numbers — if all-tables mode, randomise both factors
+  let a, b, answer;
+  if (TT.currentTable === 0) {
+    a = Math.floor(Math.random() * 10) + 1;
+    b = Math.floor(Math.random() * 10) + 1;
+  } else {
+    a = TT.currentTable;
+    b = Math.floor(Math.random() * 10) + 1;
+  }
+  answer = a * b;
+  TT._currentB = b;
+  TT._currentAnswer = answer;
+
+  // Update question display
+  document.getElementById('tt-question').innerHTML =
+    `<span class="highlight">${a}</span> × ${b} = ?`;
+
+  // Build visual hint
+  const hint = TT.currentTable === 0
+    ? `${a} × ${b} = ${a} + ${a} + ... (${b} פעמים) = ${answer}`
+    : Array(Math.min(b, 5)).fill(a).join(' + ') + (b > 5 ? ` + ... (${b} פעמים)` : '') + ` = ${answer}`;
+  document.getElementById('tt-hint').textContent = '💡 ' + hint;
+
+  // Generate 4 answer options
+  const opts = new Set([answer]);
+  while (opts.size < 4) {
+    const fake = answer + (Math.floor(Math.random() * 10) - 5) * (Math.random() > 0.5 ? 1 : TT.currentTable);
+    if (fake > 0 && fake !== answer) opts.add(fake);
+  }
+  const shuffled = [...opts].sort(() => Math.random() - 0.5);
+
+  const optsEl = document.getElementById('tt-options');
+  optsEl.innerHTML = '';
+  shuffled.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'tt-opt';
+    btn.textContent = opt;
+    btn.onclick = () => ttAnswer(btn, opt, answer);
+    optsEl.appendChild(btn);
+  });
+
+  // Update progress
+  document.getElementById('tt-prog-lbl').textContent = TT.qIndex + '/' + TT.totalQ;
+  document.getElementById('tt-prog-fill').style.width = (TT.qIndex / TT.totalQ * 100) + '%';
+}
+
+function ttAnswer(btn, chosen, correct) {
+  if (TT.answered) return;
+  TT.answered = true;
+
+  const allBtns = document.querySelectorAll('.tt-opt');
+  allBtns.forEach(b => {
+    b.disabled = true;
+    if (parseInt(b.textContent) === correct) b.classList.add('correct');
+  });
+
+  if (chosen === correct) {
+    btn.classList.add('correct');
+    TT.score += 10;
+    TT.streak++;
+    TT.correctCount++;
+    TT.bestStreak = Math.max(TT.bestStreak, TT.streak);
+    document.getElementById('tt-score').textContent = TT.score;
+    document.getElementById('tt-streak').textContent = TT.streak;
+    confetti(15);
+
+    // Check streak rewards
+    const reward = REWARDS.slice().reverse().find(r => TT.streak === r.threshold);
+    if (reward) {
+      setTimeout(() => ttShowReward(reward.icon, reward.title, reward.sub, false), 400);
+      return;
+    }
+  } else {
+    btn.classList.add('wrong');
+    TT.streak = 0;
+    TT.wrongCount++;
+    document.getElementById('tt-streak').textContent = 0;
+  }
+
+  TT.qIndex++;
+  setTimeout(ttNextQuestion, 900);
+}
+
+function ttShowReward(icon, title, sub, isSummary) {
+  document.getElementById('tt-reward-icon').textContent = icon;
+  document.getElementById('tt-reward-title').textContent = title;
+  document.getElementById('tt-reward-sub').textContent = sub;
+  document.getElementById('tt-reward-btn').textContent = isSummary ? 'חזרה לבחירה ←' : 'המשך ←';
+  document.getElementById('tt-reward-btn').onclick = isSummary ? ttBackToSelect : ttNextLevel;
+  document.getElementById('tt-overlay').classList.add('show');
+  document.getElementById('tt-reward').classList.add('show');
+}
+
+function ttNextLevel() {
+  document.getElementById('tt-overlay').classList.remove('show');
+  document.getElementById('tt-reward').classList.remove('show');
+  TT.qIndex++;
+  ttNextQuestion();
+}
+
+function ttBackToSelect() {
+  document.getElementById('tt-overlay').classList.remove('show');
+  document.getElementById('tt-reward').classList.remove('show');
+  ttBuildTableSelector();
+}
+
+function ttStartAllTables() {
+  // All-tables mode: random questions from entire multiplication table (1-10 × 1-10)
+  TT.currentTable = 0; // 0 = all tables mode
+  TT.qIndex = 0;
+  TT.correctCount = 0;
+  TT.wrongCount = 0;
+  TT.answered = false;
+  document.getElementById('tt-level-badge').textContent = '🎲 אתגר הלוח המלא';
+  document.getElementById('tt-prog-lbl').textContent = '0/' + TT.totalQ;
+  document.getElementById('tt-prog-fill').style.width = '0%';
+
+  // Highlight the all button
+  document.querySelectorAll('.tt-table-btn').forEach(b => b.classList.remove('active'));
+  const allBtn = document.getElementById('tt-all-btn');
+  if (allBtn) allBtn.classList.add('active-mode');
+
+  ttNextQuestion();
+}
+
+function ttShowSummary() {
+  const pct = Math.round(TT.correctCount / TT.totalQ * 100);
+
+  // Mark as mastered if 80%+
+  if (pct >= 80 && !TT.mastered.includes(TT.currentTable)) {
+    TT.mastered.push(TT.currentTable);
+    localStorage.setItem('tt_mastered', JSON.stringify(TT.mastered));
+  }
+  TT.tableScores[TT.currentTable] = Math.max(pct, TT.tableScores[TT.currentTable] || 0);
+  localStorage.setItem('tt_scores', JSON.stringify(TT.tableScores));
+
+  // Pick reward based on score
+  let icon, title, sub;
+  if (pct === 100) { icon = '🏆'; title = 'מושלם! 100%!'; sub = 'שלטת בלוח ' + TT.currentTable + ' לגמרי!'; }
+  else if (pct >= 80) { icon = '🌟'; title = 'כל הכבוד!'; sub = pct + '% נכון! שלטת בלוח ' + TT.currentTable + '!'; }
+  else if (pct >= 60) { icon = '👍'; title = 'טוב מאוד!'; sub = pct + '% נכון! תרגל שוב לשיפור.'; }
+  else { icon = '💪'; title = 'נסה שוב!'; sub = 'תרגול נוסף יעזור לך לשלוט בלוח ' + TT.currentTable + '.'; }
+
+  ttShowReward(icon, title, sub + '\n\nניקוד: +' + (TT.correctCount * 10) + ' נקודות\nרצף מקסימלי: ' + TT.bestStreak, true);
+  ttBuildTableSelector();
+}
+
+
+// ══════════════════════════════════════════════════════════════
+//  DIVISION WORLD
+// ══════════════════════════════════════════════════════════════
+
+const DIV = {
+  currentDivisor: 1,
+  qIndex: 0,
+  totalQ: 10,
+  score: 0,
+  streak: 0,
+  bestStreak: 0,
+  correctCount: 0,
+  answered: false,
+  allMode: false,
+  mastered: JSON.parse(localStorage.getItem('div_mastered') || '[]'),
+  _a: 0, _b: 0, _ans: 0,
+};
+
+function showDivision() {
+  showScreen('div-screen');
+  divBuildSelector();
+  divStartTable(1);
+}
+
+function divBuildSelector() {
+  const grid = document.getElementById('div-tables-grid');
+  grid.innerHTML = '';
+
+  const allBtn = document.createElement('button');
+  allBtn.className = 'div-all-btn' + (DIV.allMode ? ' active-mode' : '') + ' div-table-btn';
+  allBtn.textContent = '🎲 אתגר חילוק מלא';
+  allBtn.onclick = divStartAll;
+  grid.appendChild(allBtn);
+
+  for (let i = 1; i <= 10; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'div-table-btn' +
+      (i === DIV.currentDivisor && !DIV.allMode ? ' active' : '') +
+      (DIV.mastered.includes(i) ? ' mastered' : '');
+    btn.textContent = '÷ ' + i;
+    btn.onclick = () => divStartTable(i);
+    grid.appendChild(btn);
+  }
+}
+
+function divStartTable(n) {
+  DIV.currentDivisor = n;
+  DIV.allMode = false;
+  DIV.qIndex = 0;
+  DIV.correctCount = 0;
+  DIV.answered = false;
+  document.getElementById('div-level-badge').textContent = '÷ ' + n;
+  document.getElementById('div-prog-lbl').textContent = '0/' + DIV.totalQ;
+  document.getElementById('div-prog-fill').style.width = '0%';
+  const _dv = document.getElementById('div-visual');
+  _dv.classList.remove('show'); _dv.style.display='';
+  const _bc = document.getElementById('div-next-btn-correct');
+  if (_bc) _bc.style.display = 'none';
+  divBuildSelector();
+  divNextQuestion();
+}
+
+function divStartAll() {
+  DIV.allMode = true;
+  DIV.qIndex = 0;
+  DIV.correctCount = 0;
+  DIV.answered = false;
+  document.getElementById('div-level-badge').textContent = '🎲 אתגר חילוק מלא';
+  document.getElementById('div-prog-lbl').textContent = '0/' + DIV.totalQ;
+  document.getElementById('div-prog-fill').style.width = '0%';
+  const _dv = document.getElementById('div-visual');
+  _dv.classList.remove('show'); _dv.style.display='';
+  const _bc = document.getElementById('div-next-btn-correct');
+  if (_bc) _bc.style.display = 'none';
+  divBuildSelector();
+  divNextQuestion();
+}
+
+function divNextQuestion() {
+  if (DIV.qIndex >= DIV.totalQ) { divShowSummary(); return; }
+  DIV.answered = false;
+
+  const vis = document.getElementById('div-visual');
+  vis.classList.remove('show');
+  vis.style.display = '';
+  document.getElementById('div-next-btn').classList.remove('show');
+
+  // Generate question: pick divisor and quotient, then compute dividend
+  const divisor = DIV.allMode ? (Math.floor(Math.random() * 10) + 1) : DIV.currentDivisor;
+  const quotient = Math.floor(Math.random() * 10) + 1;
+  const dividend = divisor * quotient;
+  DIV._a = dividend; DIV._b = divisor; DIV._ans = quotient;
+
+  document.getElementById('div-question').innerHTML =
+    `${dividend} ÷ ${divisor} = <span class="dh">?</span>`;
+
+  // 4 options
+  const opts = new Set([quotient]);
+  while (opts.size < 4) {
+    const fake = quotient + (Math.floor(Math.random() * 6) - 3);
+    if (fake > 0 && fake !== quotient) opts.add(fake);
+  }
+  const shuffled = [...opts].sort(() => Math.random() - 0.5);
+  const optsEl = document.getElementById('div-options');
+  optsEl.innerHTML = '';
+  shuffled.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'div-opt';
+    btn.textContent = opt;
+    btn.onclick = () => divAnswer(btn, opt);
+    optsEl.appendChild(btn);
+  });
+
+  document.getElementById('div-prog-lbl').textContent = DIV.qIndex + '/' + DIV.totalQ;
+  document.getElementById('div-prog-fill').style.width = (DIV.qIndex / DIV.totalQ * 100) + '%';
+}
+
+function divAnswer(btn, chosen) {
+  if (DIV.answered) return;
+  DIV.answered = true;
+
+  const correct = DIV._ans;
+  document.querySelectorAll('.div-opt').forEach(b => {
+    b.disabled = true;
+    if (parseInt(b.textContent) === correct) b.classList.add('correct');
+  });
+
+  if (chosen === correct) {
+    btn.classList.add('correct');
+    DIV.score += 10;
+    DIV.streak++;
+    DIV.correctCount++;
+    DIV.bestStreak = Math.max(DIV.bestStreak, DIV.streak);
+    document.getElementById('div-score').textContent = DIV.score;
+    document.getElementById('div-streak').textContent = DIV.streak;
+    confetti(12);
+  } else {
+    btn.classList.add('wrong');
+    DIV.streak = 0;
+    document.getElementById('div-streak').textContent = 0;
+  }
+
+  // Show graphic explanation only on wrong answer
+  setTimeout(() => {
+    if (chosen !== correct) {
+      divShowVisual(DIV._a, DIV._b, DIV._ans);
+      document.getElementById('div-next-btn-correct').style.display = 'none';
+      setTimeout(() => {
+        document.getElementById('div-visual').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 200);
+    } else {
+      document.getElementById('div-next-btn-correct').style.display = 'block';
+    }
+  }, 300);
+}
+
+function divShowVisual(dividend, divisor, quotient) {
+  const visual = document.getElementById('div-visual');
+  const groupsEl = document.getElementById('div-visual-groups');
+  const textEl = document.getElementById('div-visual-text');
+  const titleEl = document.getElementById('div-visual-title');
+
+  titleEl.textContent = dividend + ' \u00f7 ' + divisor + ' = ' + quotient + ' \u2014 \u05d4\u05e1\u05d1\u05e8 \u05d2\u05e8\u05e4\u05d9 \ud83c\udf66';
+
+  const scoopColors = ['#FF9EC4','#A8D5A2','#FFD580','#C3A6E8','#87CEEB','#FF8C69','#B5EAD7','#FFDAC1','#E8A0BF','#AEC6CF'];
+  const cupColors   = ['#FF6B9D','#5BBFED','#7BC67A','#FFB347','#B19CD9','#FF9F7E','#85C1E9','#82E0AA','#F1948A','#85929E'];
+
+  const maxCups   = Math.min(divisor, 7);
+  const maxScoops = Math.min(quotient, 5);
+  const scoopR = 18, gap = 10, cupW = 70, cupH = 38;
+  const totalH = 40 + maxScoops * (scoopR * 1.6) + cupH + 20;
+  const totalW = maxCups * (cupW + gap) - gap + 20;
+
+  let svg = '<svg viewBox="0 0 ' + totalW + ' ' + totalH + '" width="100%" style="max-height:240px;overflow:visible" xmlns="http://www.w3.org/2000/svg">';
+
+  for (let c = 0; c < maxCups; c++) {
+    const cx = 10 + c * (cupW + gap) + cupW / 2;
+    const cupColor = cupColors[c % cupColors.length];
+    const baseY = totalH - 18;
+    const cupTopY = baseY - cupH;
+    const cTop = cupW * 0.9, cBot = cupW * 0.55;
+
+    svg += '<polygon points="' + (cx-cTop/2) + ',' + cupTopY + ' ' + (cx+cTop/2) + ',' + cupTopY + ' ' + (cx+cBot/2) + ',' + baseY + ' ' + (cx-cBot/2) + ',' + baseY + '" fill="' + cupColor + '"/>';
+    svg += '<ellipse cx="' + cx + '" cy="' + cupTopY + '" rx="' + (cTop/2) + '" ry="7" fill="' + cupColor + '" opacity="0.85"/>';
+    svg += '<line x1="' + (cx-cTop/2+8) + '" y1="' + (cupTopY+6) + '" x2="' + (cx-cBot/2+5) + '" y2="' + (baseY-4) + '" stroke="white" stroke-width="1.3" opacity="0.4"/>';
+    svg += '<line x1="' + (cx+cTop/2-8) + '" y1="' + (cupTopY+6) + '" x2="' + (cx+cBot/2-5) + '" y2="' + (baseY-4) + '" stroke="white" stroke-width="1.3" opacity="0.4"/>';
+    svg += '<text x="' + cx + '" y="' + (cupTopY + cupH*0.62) + '" text-anchor="middle" font-size="12" fill="white" opacity="0.85">\u2665</text>';
+
+    for (let s = 0; s < maxScoops; s++) {
+      const sy = cupTopY - scoopR * 0.5 - s * (scoopR * 1.6);
+      const sc = scoopColors[(c + s * 3) % scoopColors.length];
+      const r  = scoopR - s * 0.4;
+      svg += '<circle cx="' + cx + '" cy="' + sy + '" r="' + r + '" fill="' + sc + '" stroke="white" stroke-width="1.8"/>';
+      svg += '<circle cx="' + (cx - r*0.32) + '" cy="' + (sy - r*0.32) + '" r="' + (r*0.22) + '" fill="white" opacity="0.55"/>';
+      svg += '<circle cx="' + (cx + r*0.22) + '" cy="' + (sy + r*0.18) + '" r="' + (r*0.13) + '" fill="#7B3F00" opacity="0.7"/>';
+      if (s === maxScoops - 1) {
+        const spCols = ['#FF3333','#3399FF','#FFDD00','#33CC33'];
+        const spPositions = [{dx:-0.3,dy:-0.5},{dx:0.4,dy:-0.4},{dx:-0.4,dy:0.1},{dx:0.3,dy:0.2}];
+        for (let sp = 0; sp < 4; sp++) {
+          const sx2 = Math.round(cx + r * spPositions[sp].dx);
+          const sy2 = Math.round(sy + r * spPositions[sp].dy);
+          svg += '<circle cx="' + sx2 + '" cy="' + sy2 + '" r="2.5" fill="' + spCols[sp] + '"/>';
+        }
+      }
+    }
+
+    if (quotient > maxScoops) {
+      const topY2 = cupTopY - scoopR*0.5 - (maxScoops-1)*(scoopR*1.6) - scoopR - 10;
+      svg += '<text x="' + cx + '" y="' + topY2 + '" text-anchor="middle" font-size="11" font-weight="700" fill="#666">+' + (quotient-maxScoops) + '</text>';
+    }
+
+    svg += '<text x="' + cx + '" y="' + (baseY + 14) + '" text-anchor="middle" font-size="10" font-weight="700" fill="#888">\u05d2\u05d1\u05d9\u05e2 ' + (c+1) + '</text>';
+  }
+
+  if (divisor > maxCups) {
+    svg += '<text x="' + (totalW-4) + '" y="' + (totalH/2) + '" text-anchor="end" font-size="13" font-weight="700" fill="#aaa">...+' + (divisor-maxCups) + '</text>';
+  }
+
+  svg += '</svg>';
+  groupsEl.innerHTML = svg;
+  textEl.innerHTML = '<strong style="font-size:15px">' + dividend + '</strong> \u05db\u05d3\u05d5\u05e8\u05d9 \u05d2\u05dc\u05d9\u05d3\u05d4 \u00f7 <strong style="color:var(--div-color);font-size:15px">' + divisor + '</strong> \u05d2\u05d1\u05d9\u05e2\u05d9\u05dd = <strong style="color:var(--div-color);font-size:18px">' + quotient + ' \u05db\u05d3\u05d5\u05e8\u05d9\u05dd</strong> \u05d1\u05db\u05dc \u05d2\u05d1\u05d9\u05e2 \ud83c\udf66';
+  visual.style.removeProperty('display');
+  visual.classList.add('show');
+}
+function divNext() {
+  DIV.qIndex++;
+  divNextQuestion();
+}
+
+function divShowSummary() {
+  const pct = Math.round(DIV.correctCount / DIV.totalQ * 100);
+  if (pct >= 80 && !DIV.allMode && !DIV.mastered.includes(DIV.currentDivisor)) {
+    DIV.mastered.push(DIV.currentDivisor);
+    localStorage.setItem('div_mastered', JSON.stringify(DIV.mastered));
+  }
+
+  let icon, title, sub;
+  if (pct === 100)      { icon = '🏆'; title = 'מושלם!';     sub = '100% נכון! אלוף החילוק!'; }
+  else if (pct >= 80)   { icon = '🌟'; title = 'כל הכבוד!';  sub = pct + '% נכון! שלטת בחילוק!'; }
+  else if (pct >= 60)   { icon = '👍'; title = 'טוב מאוד!';  sub = pct + '% נכון! תרגל שוב לשיפור.'; }
+  else                  { icon = '💪'; title = 'נסה שוב!';   sub = 'תרגול נוסף יעזור לך!'; }
+
+  const _dv = document.getElementById('div-visual');
+  _dv.classList.remove('show'); _dv.style.display='';
+  const _bc = document.getElementById('div-next-btn-correct');
+  if (_bc) _bc.style.display = 'none';
+  document.getElementById('div-question').innerHTML = icon;
+
+  // Show reward using existing tt-reward popup
+  document.getElementById('tt-reward-icon').textContent = icon;
+  document.getElementById('tt-reward-title').textContent = title;
+  document.getElementById('tt-reward-sub').textContent = sub + '\nניקוד: +' + (DIV.correctCount * 10) + ' נקודות';
+  document.getElementById('tt-reward-btn').textContent = 'חזרה לבחירה ←';
+  document.getElementById('tt-reward-btn').onclick = () => {
+    document.getElementById('tt-overlay').classList.remove('show');
+    document.getElementById('tt-reward').classList.remove('show');
+    divBuildSelector();
+    divStartTable(DIV.currentDivisor);
+  };
+  document.getElementById('tt-overlay').classList.add('show');
+  document.getElementById('tt-reward').classList.add('show');
+}
+
+
+// ══════════════════════════════════════════════════════════════
+//  DIVISION WORLD
+// ══════════════════════════════════════════════════════════════
+
+const DV = {
+  divisor: 1,       // 0 = all
+  qIndex: 0,
+  totalQ: 10,
+  score: 0,
+  streak: 0,
+  bestStreak: 0,
+  correctCount: 0,
+  answered: false,
+  mastered: JSON.parse(localStorage.getItem('dv_mastered') || '[]'),
+  _dividend: 0,
+  _answer: 0,
+  _rewardNext: null,
+};
+
+function showDivision() {
+  showScreen('div-screen');
+  dvBuildSelector();
+  dvStartDivisor(1);
+}
+
+function dvBuildSelector() {
+  const grid = document.getElementById('div-tables-grid');
+  grid.innerHTML = '';
+
+  const allBtn = document.createElement('button');
+  allBtn.className = 'div-all-btn' + (DV.divisor === 0 ? ' active-mode' : '');
+  allBtn.innerHTML = '🎲 אתגר החילוק המלא';
+  allBtn.onclick = dvStartAll;
+  grid.appendChild(allBtn);
+
+  for (let i = 1; i <= 10; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'div-table-btn' +
+      (i === DV.divisor ? ' active' : '') +
+      (DV.mastered.includes(i) ? ' mastered' : '');
+    btn.textContent = '÷ ' + i;
+    btn.onclick = () => dvStartDivisor(i);
+    grid.appendChild(btn);
+  }
+}
+
+function dvStartDivisor(n) {
+  DV.divisor = n;
+  DV.qIndex = 0; DV.correctCount = 0; DV.answered = false;
+  document.getElementById('div-level-badge').textContent = 'חילוק ב-' + n;
+  document.getElementById('div-prog-lbl').textContent = '0/10';
+  document.getElementById('div-prog-fill').style.width = '0%';
+  document.getElementById('div-graphic').classList.remove('visible');
+  dvBuildSelector();
+  dvNextQuestion();
+}
+
+function dvStartAll() {
+  DV.divisor = 0;
+  DV.qIndex = 0; DV.correctCount = 0; DV.answered = false;
+  document.getElementById('div-level-badge').textContent = '🎲 אתגר החילוק המלא';
+  document.getElementById('div-prog-lbl').textContent = '0/10';
+  document.getElementById('div-prog-fill').style.width = '0%';
+  document.getElementById('div-graphic').classList.remove('visible');
+  dvBuildSelector();
+  dvNextQuestion();
+}
+
+function dvNextQuestion() {
+  if (DV.qIndex >= DV.totalQ) { dvShowSummary(); return; }
+  DV.answered = false;
+  document.getElementById('div-graphic').classList.remove('visible');
+
+  const divisor = DV.divisor === 0 ? Math.floor(Math.random()*10)+1 : DV.divisor;
+  const answer  = Math.floor(Math.random()*10)+1;
+  const dividend = divisor * answer;
+  DV._divisor  = divisor;
+  DV._dividend = dividend;
+  DV._answer   = answer;
+
+  document.getElementById('div-question').innerHTML =
+    `${dividend} ÷ ${divisor} = <span class="dh">?</span>`;
+
+  // 4 options
+  const opts = new Set([answer]);
+  while (opts.size < 4) {
+    const fake = Math.max(1, answer + Math.floor(Math.random()*7)-3);
+    if (fake !== answer) opts.add(fake);
+  }
+  const shuffled = [...opts].sort(() => Math.random() - 0.5);
+  const optsEl = document.getElementById('div-options');
+  optsEl.innerHTML = '';
+  shuffled.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'div-opt';
+    btn.textContent = opt;
+    btn.onclick = () => dvAnswer(btn, opt);
+    optsEl.appendChild(btn);
+  });
+
+  document.getElementById('div-prog-lbl').textContent = DV.qIndex + '/10';
+  document.getElementById('div-prog-fill').style.width = (DV.qIndex/10*100) + '%';
+}
+
+function dvAnswer(btn, chosen) {
+  if (DV.answered) return;
+  DV.answered = true;
+
+  const correct = DV._answer;
+  document.querySelectorAll('.div-opt').forEach(b => {
+    b.disabled = true;
+    if (parseInt(b.textContent) === correct) b.classList.add('correct');
+  });
+
+  const isCorrect = chosen === correct;
+  if (isCorrect) {
+    btn.classList.add('correct');
+    DV.score += 10; DV.streak++; DV.correctCount++;
+    DV.bestStreak = Math.max(DV.bestStreak, DV.streak);
+    document.getElementById('div-score').textContent = DV.score;
+    document.getElementById('div-streak').textContent = DV.streak;
+    confetti(12);
+  } else {
+    btn.classList.add('wrong');
+    DV.streak = 0;
+    document.getElementById('div-streak').textContent = 0;
+  }
+
+  // Always show graphic explanation after answering
+  dvShowGraphic(DV._dividend, DV._divisor, DV._answer, isCorrect);
+
+  // Check streak reward
+  const streakRewards = {3:'⭐',5:'🌟',10:'🏆',20:'👑'};
+  const streakTitles  = {3:'רצף של 3!',5:'סופר כוכב!',10:'אלוף החילוק!',20:'מלך החילוק!'};
+  if (isCorrect && streakRewards[DV.streak]) {
+    DV._rewardNext = 'streak';
+    setTimeout(() => dvShowReward(
+      streakRewards[DV.streak],
+      streakTitles[DV.streak],
+      DV.streak + ' תשובות נכונות ברצף! מדהים!',
+      false
+    ), 1800);
+  } else {
+    DV.qIndex++;
+    // auto-advance after showing graphic
+    setTimeout(() => {
+      document.getElementById('div-graphic').classList.remove('visible');
+      dvNextQuestion();
+    }, 2200);
+  }
+}
+
+// ── Graphic explanation ────────────────────────────────────────
+function dvShowGraphic(dividend, divisor, answer, isCorrect) {
+  const graphic = document.getElementById('div-graphic');
+  const svgEl   = document.getElementById('div-graphic-svg');
+  const textEl  = document.getElementById('div-graphic-text');
+  const titleEl = document.getElementById('div-graphic-title');
+
+  titleEl.textContent = isCorrect ? '✅ נכון! הנה ההסבר הגרפי:' : `❌ התשובה היא ${answer}. הנה למה:`;
+
+  // Build SVG: show dividend as rows of divisor items, grouped into answer groups
+  const cols    = Math.min(divisor, 10);
+  const rows    = answer;
+  const size    = Math.min(26, Math.floor(300 / cols));
+  const gap     = 4;
+  const colors  = ['#16a34a','#22c55e','#4ade80','#86efac'];
+  const svgW    = cols * (size + gap) + gap;
+  const svgH    = rows * (size + gap) + gap + 24;
+
+  let shapes = '';
+  for (let r = 0; r < rows; r++) {
+    const color = colors[r % colors.length];
+    // Group background
+    shapes += `<rect x="${gap/2}" y="${r*(size+gap)+gap/2}" width="${svgW-gap}" height="${size+gap}" rx="6" fill="${color}22"/>`;
+    // Group label
+    shapes += `<text x="${svgW + 6}" y="${r*(size+gap)+size/2+gap}" font-size="11" font-family="Heebo,sans-serif" fill="#555" dominant-baseline="middle">קבוצה ${r+1}</text>`;
+    for (let c = 0; c < cols; c++) {
+      const x = c * (size + gap) + gap;
+      const y = r * (size + gap) + gap;
+      // Draw a circle
+      shapes += `<circle cx="${x+size/2}" cy="${y+size/2}" r="${size/2-1}" fill="${color}" opacity="0.85"/>`;
+      // Number inside
+      shapes += `<text x="${x+size/2}" y="${y+size/2}" text-anchor="middle" dominant-baseline="middle" font-size="${Math.max(8,size/2.2)}" font-family="Heebo,sans-serif" fill="white" font-weight="700">●</text>`;
+    }
+  }
+
+  const totalSvgW = svgW + 60;
+  svgEl.innerHTML = `<svg viewBox="0 0 ${totalSvgW} ${svgH}" width="100%" xmlns="http://www.w3.org/2000/svg">
+    ${shapes}
+    <text x="${totalSvgW/2}" y="${svgH-4}" text-anchor="middle" font-size="12" font-family="Heebo,sans-serif" fill="#888">${dividend} עצמים ÷ ${divisor} בכל קבוצה = ${answer} קבוצות</text>
+  </svg>`;
+
+  textEl.textContent = `${dividend} ÷ ${divisor} = ${answer}
+חילקנו ${dividend} עצמים ל-${answer} קבוצות שוות, בכל קבוצה יש ${divisor} עצמים.`;
+
+  graphic.classList.add('visible');
+}
+
+function dvShowReward(icon, title, sub, isSummary) {
+  document.getElementById('div-reward-icon').textContent = icon;
+  document.getElementById('div-reward-title').textContent = title;
+  document.getElementById('div-reward-sub').textContent = sub;
+  document.getElementById('div-reward-btn').textContent = isSummary ? 'חזרה לבחירה ←' : 'המשך ←';
+  document.getElementById('div-reward-btn').onclick = isSummary ? dvBackToSelect : divNextAfterReward;
+  document.getElementById('div-overlay').classList.add('show');
+  document.getElementById('div-reward').classList.add('show');
+}
+
+function divNextAfterReward() {
+  document.getElementById('div-overlay').classList.remove('show');
+  document.getElementById('div-reward').classList.remove('show');
+  document.getElementById('div-graphic').classList.remove('visible');
+  DV.qIndex++;
+  dvNextQuestion();
+}
+
+function dvBackToSelect() {
+  document.getElementById('div-overlay').classList.remove('show');
+  document.getElementById('div-reward').classList.remove('show');
+  dvBuildSelector();
+}
+
+function dvShowSummary() {
+  const pct = Math.round(DV.correctCount / DV.totalQ * 100);
+  if (pct >= 80 && DV.divisor > 0 && !DV.mastered.includes(DV.divisor)) {
+    DV.mastered.push(DV.divisor);
+    localStorage.setItem('dv_mastered', JSON.stringify(DV.mastered));
+  }
+  let icon, title, sub;
+  if (pct === 100) { icon='🏆'; title='מושלם! 100%!'; sub='שלטת בחילוק ב-' + DV._divisor + '!'; }
+  else if (pct >= 80) { icon='🌟'; title='כל הכבוד!'; sub=pct + '% נכון! מצוין!'; }
+  else if (pct >= 60) { icon='👍'; title='טוב מאוד!'; sub=pct + '% נכון! תרגל שוב לשיפור.'; }
+  else { icon='💪'; title='נסה שוב!'; sub='תרגול נוסף יעזור. ניקוד: ' + DV.score; }
+  dvShowReward(icon, title, sub + '\nניקוד: ' + DV.score + ' | רצף מקסימלי: ' + DV.bestStreak, true);
+  dvBuildSelector();
+}
 
 initInfo();
 
