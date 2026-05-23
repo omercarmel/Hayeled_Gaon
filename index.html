@@ -1714,6 +1714,12 @@ async function loadAuthState() {
     const { data: { session } } = await client.auth.getSession();
     if (!session) { currentUser = null; currentPaid = false; return; }
     currentUser = session.user;
+    // Special override for the admin/test user: always grant full access
+    if (currentUser.email === 'omer.carmel.2@gmail.com') {
+      currentPaid = true;
+      localStorage.setItem('hg_paid', '1');
+      return;
+    }
     // Check paid status
     const { data } = await client
       .from('users_paid')
@@ -1728,7 +1734,7 @@ async function loadAuthState() {
   }
 }
 
-function isPaid()            { return currentPaid || localStorage.getItem('hg_paid') === '1'; }
+function isPaid()            { return currentPaid || localStorage.getItem('hg_paid') === '1' || (currentUser && currentUser.email === 'omer.carmel.2@gmail.com'); }
 
 // ─── Magic link login ──────────────────────────────────────────
 async function sendMagicLink() {
